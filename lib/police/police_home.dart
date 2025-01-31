@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:judica/common_pages/profile.dart';
 import 'package:judica/police/chat_bot_police.dart';
+import 'package:judica/police/engagement.dart';
+import 'package:judica/police/police_complaint_dashboard.dart';
 import 'fir_page.dart'; // Import your FIR page
 
 class PoliceHome extends StatefulWidget {
@@ -20,7 +22,9 @@ class _PoliceHomeState extends State<PoliceHome> {
   static final List<Widget> _pages = <Widget>[
     FirComponent(), // FIR-related component
     const ChatScreenPolice(), // ChatBot Page
-    const ProfilePage(), // Profile Page
+    const ProfilePage(),
+    ComplaintManagementDashboard(),
+    PoliceEngagementScreen()// Profile Page
   ];
 
   // Function to handle tab selection
@@ -82,27 +86,40 @@ class _PoliceHomeState extends State<PoliceHome> {
         ),
         child: _pages[_selectedIndex], // Display the selected page
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.assignment), // Updated icon for FIR
-            label: 'FIR',
+        bottomNavigationBar: Theme(
+          data: ThemeData(
+            canvasColor: const Color.fromRGBO(255, 165, 89, 1), // Set background color here
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'ChatBot',
+          child: BottomNavigationBar(
+            items: const <BottomNavigationBarItem>[
+              BottomNavigationBarItem(
+                icon: Icon(Icons.assignment), // Updated icon for FIR
+                label: 'FIR',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.chat),
+                label: 'ChatBot',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: 'Profile',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard),
+                label: 'Main',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.remove_from_queue_sharp),
+                label: 'Create',
+              ),
+            ],
+            currentIndex: _selectedIndex, // Highlight the selected tab
+            selectedItemColor: Colors.white, // Selected icon color
+            unselectedItemColor: Colors.black54, // Unselected icon color
+            onTap: _onItemTapped, // Handle tab selection
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
-        currentIndex: _selectedIndex, // Highlight the selected tab
-        selectedItemColor: Colors.white, // Selected icon color
-        unselectedItemColor: Colors.black54, // Unselected icon color
-        backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Background color
-        onTap: _onItemTapped, // Handle tab selection
-      ),
+        )
+
     );
   }
 }

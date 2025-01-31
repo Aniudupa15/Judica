@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:judica/Judge/bail_page.dart';
 import 'package:judica/Judge/chat_bot_judge.dart';
+import 'package:judica/Judge/chatapp.dart';
 import 'package:judica/common_pages/profile.dart';
 
 
@@ -21,7 +22,8 @@ class _UserHomeState extends State<AdvocateHome> {
   static final List<Widget> _pages = <Widget>[
     const Bailpage(), // FIR-related component
     const ChatScreenJudge(), // Placeholder for Home Page
-    const ProfilePage(), // Profile Page
+    const ProfilePage(),
+    AdvocateChatPage(receiverId: "123", receiverName: "Advocate")
   ];
 
   // Function to handle tab selection
@@ -89,6 +91,10 @@ class _UserHomeState extends State<AdvocateHome> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_bubble),
+            label: 'chat',
           ),
         ],
         currentIndex: _selectedIndex, // Highlight the selected tab

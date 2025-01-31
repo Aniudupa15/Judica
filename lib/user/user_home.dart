@@ -3,6 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:judica/common_pages/profile.dart';
 import 'package:judica/user/chat_bot_user.dart';
+import 'package:judica/user/chatapp.dart';
+import 'package:judica/user/filing_case.dart';
+import 'package:judica/user/govscheme.dart';
 
 class UserHome extends StatefulWidget {
   const UserHome({super.key});
@@ -17,8 +20,10 @@ class _UserHomeState extends State<UserHome> {
 
   // Define the pages for navigation
   static final List<Widget> _pages = <Widget>[
-    const ChatScreenUser(), // ChatBot Page
-    const ProfilePage(), // Profile Page
+    const ChatScreenUser(),
+     ComplaintForm(),// ChatBot Page
+    const ProfilePage(),
+    AdvocateListPage()
   ];
 
   // Function to handle tab selection
@@ -70,7 +75,12 @@ class _UserHomeState extends State<UserHome> {
       appBar: AppBar(
         title: const Text("Judica"),
         backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Lighter orange
-        automaticallyImplyLeading: false, // Removes the back button
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(onPressed: (){
+            showDialog(context: context, builder: (context)=>GovernmentInfo(),);
+          }, icon: Icon(Icons.notifications))
+        ],// Removes the back button
       ),
       body: _pages[_selectedIndex], // Display the selected page
       bottomNavigationBar: BottomNavigationBar(
@@ -82,6 +92,14 @@ class _UserHomeState extends State<UserHome> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
             label: 'Profile',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.file_copy_outlined),
+            label: 'Filing',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.file_copy_outlined),
+            label: 'Chat',
           ),
         ],
         currentIndex: _selectedIndex, // Highlight the selected tab

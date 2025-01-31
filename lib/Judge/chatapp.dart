@@ -2,60 +2,52 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-class ChatScreen extends StatefulWidget {
-  final String groupId;
-  final String groupName;
+class AdvocateChatPage extends StatefulWidget {
+  final String receiverId;
+  final String receiverName;
 
-  ChatScreen({Key? key, required this.groupId, required this.groupName})
-      : super(key: key);
+  AdvocateChatPage({
+    Key? key,
+    required this.receiverId,
+    required this.receiverName,
+  }) : super(key: key);
 
   @override
-  _ChatScreenState createState() => _ChatScreenState();
+  _AdvocateChatPageState createState() => _AdvocateChatPageState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _AdvocateChatPageState extends State<AdvocateChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final User? _currentUser = FirebaseAuth.instance.currentUser;
-  String userName = "User";
+  late String chatId;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserName();
+    chatId = _generateChatId(_currentUser!.uid, widget.receiverId);
   }
 
-  Future<void> _fetchUserName() async {
-    try {
-      DocumentSnapshot<Map<String, dynamic>> userDoc = await FirebaseFirestore
-          .instance
-          .collection("user_data")
-          .doc(_currentUser?.email)
-          .get();
-      setState(() {
-        userName = userDoc.data()?['fullName'] ?? "User";
-      });
-    } catch (e) {
-      print("Error fetching user details: $e");
-    }
+  String _generateChatId(String userId, String receiverId) {
+    return userId.hashCode <= receiverId.hashCode
+        ? '${userId}_$receiverId'
+        : '${receiverId}_$userId';
   }
 
-  Future<void> _sendMessage() async {
-    final content = _messageController.text.trim();
-    if (content.isEmpty) return;
+  Future<void> _sendMessage(String content) async {
+    if (content.trim().isEmpty) return;
 
     try {
-      await FirebaseFirestore.instance
-          .collection('groups')
-          .doc(widget.groupId)
-          .collection('messages')
-          .add({
-        'sender': _currentUser?.email ?? 'Unknown',
+      await FirebaseFirestore.instance.collection('advocate_chats').doc(chatId).collection('messages').add({
+        'sender': _currentUser!.uid,
         'content': content,
         'timestamp': FieldValue.serverTimestamp(),
       });
       _messageController.clear();
     } catch (e) {
       print('Error sending message: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to send message.')),
+      );
     }
   }
 
@@ -63,15 +55,15 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.groupName),
+        title: Text(widget.receiverName),
       ),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('groups')
-                  .doc(widget.groupId)
+                  .collection('advocate_chats')
+                  .doc(chatId)
                   .collection('messages')
                   .orderBy('timestamp', descending: true)
                   .snapshots(),
@@ -85,37 +77,56 @@ class _ChatScreenState extends State<ChatScreen> {
                   );
                 }
                 final messages = snapshot.data!.docs.toList();
+
                 return ListView.builder(
                   reverse: true,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final message = messages[index].data() as Map<String, dynamic>;
-                    final isCurrentUser = message['sender'] == _currentUser?.email;
-                    return ListTile(
-                      title: Text(message['content']),
-                      subtitle: Text(isCurrentUser ? 'You' : message['sender']),
-                      tileColor: isCurrentUser ? Colors.blue.shade100 : Colors.grey.shade200,
+                    final messageDoc = messages[index];
+                    final message = messageDoc.data() as Map<String, dynamic>;
+                    final senderId = message['sender'] ?? 'Unknown';
+                    final isCurrentUser = senderId == _currentUser?.uid;
+                    final content = message['content'] ?? '';
+
+                    return Align(
+                      alignment: isCurrentUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                            vertical: 4, horizontal: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: isCurrentUser ? Colors.blue : Colors.grey,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          content,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
                     );
                   },
                 );
               },
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _messageController,
                     decoration: const InputDecoration(
-                      hintText: 'Enter message...',
+                      hintText: 'Write a message...',
+                      border: InputBorder.none,
                     ),
                   ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.send),
-                  onPressed: _sendMessage,
+                  onPressed: () => _sendMessage(_messageController.text),
                 ),
               ],
             ),
