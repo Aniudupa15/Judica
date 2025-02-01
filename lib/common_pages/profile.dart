@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:judica/common_pages/slpash_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -172,7 +173,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: TextButton.styleFrom(
                         foregroundColor: const Color.fromRGBO(255, 125, 41, 1), // Cancel button color
                       ),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context)!.cancel),
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
@@ -185,7 +186,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: ElevatedButton.styleFrom(
                         foregroundColor: Colors.white, backgroundColor: const Color.fromRGBO(255, 125, 41, 1),
                       ),
-                      child: const Text('Save'),
+                      child: Text(AppLocalizations.of(context)!.save),
                     ),
                   ],
                 ),
@@ -248,45 +249,45 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       child: CircleAvatar(
-                        radius: 85, // Avatar radius
-                        backgroundColor: Colors.transparent, // Transparent background inside the avatar
-                        child:ClipOval(
-                      child: imageUrl != null
-                      ? Image.file(
-                          File(imageUrl!),
-                      fit: BoxFit.cover, // Ensure the image fits the circle properly
-                      width: 170, // Adjust width to match radius
-                      height: 170, // Adjust height to match radius
-                    )
-                        : Center( // Show a message when imageUrl is null
-                    child: Text(
-                    'Click to upload', // Message text
-                    textAlign: TextAlign.center, // Center align the text
-                    style: TextStyle(
-                      color: Colors.white, // Text color
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-            ),
-          )
+                          radius: 85, // Avatar radius
+                          backgroundColor: Colors.transparent, // Transparent background inside the avatar
+                          child:ClipOval(
+                            child: imageUrl != null
+                                ? Image.file(
+                              File(imageUrl!),
+                              fit: BoxFit.cover, // Ensure the image fits the circle properly
+                              width: 170, // Adjust width to match radius
+                              height: 170, // Adjust height to match radius
+                            )
+                                : Center( // Show a message when imageUrl is null
+                              child: Text(
+                                AppLocalizations.of(context)!.clicktoupload, // Message text
+                                textAlign: TextAlign.center, // Center align the text
+                                style: TextStyle(
+                                  color: Colors.white, // Text color
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          )
 
-        ),
+                      ),
                     ),
                   ),
 
 
                   const SizedBox(height: 30),
                   // Editable fields using DialogBox
-                  buildEditableField("Name", userName, 'username'),
+                  buildEditableField(AppLocalizations.of(context)!.name, userName,AppLocalizations.of(context)!.username),
                   const SizedBox(height: 15),
-                  buildEditableField("Email", email, 'email'),
+                  buildEditableField(AppLocalizations.of(context)!.email, email,AppLocalizations.of(context)!.email),
                   const SizedBox(height: 15),
-                  buildEditableField("Mobile Number", mobileNumber, 'Mobile Number'),
+                  buildEditableField(AppLocalizations.of(context)!.mobilenumber, mobileNumber, AppLocalizations.of(context)!.mobilenumber),
                   const SizedBox(height: 15),
-                  buildEditableField("Date of Birth", dateOfBirth, 'Date of Birth'),
+                  buildEditableField(AppLocalizations.of(context)!.dateOfBirth, dateOfBirth,AppLocalizations.of(context)!.dateOfBirth),
                   const SizedBox(height: 15),
-                  buildEditableField("Address", address, 'Address'),
+                  buildEditableField(AppLocalizations.of(context)!.address, address, AppLocalizations.of(context)!.address),
                   const SizedBox(height: 30), // Space before logout button
                   ElevatedButton(
                     onPressed: _logout,
@@ -298,7 +299,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    child: const Text('Logout'),
+                    child: Text(AppLocalizations.of(context)!.logout),
                   ),
                 ],
               ),
@@ -334,7 +335,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // Wrap the value with a Flexible widget to avoid overflow
             Flexible(
               child: Text(
-                value ?? 'Not Available',
+                value ?? AppLocalizations.of(context)!.notavailable,
                 style: const TextStyle(fontSize: 16),
                 overflow: TextOverflow.ellipsis, // Add ellipsis for long text
               ),
