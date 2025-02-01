@@ -1,6 +1,6 @@
 {
   "hello"          : "Hello, I’m Judica your Legal Assistant.",
-  "mymission"      : "My mission is to make sure everyone gets the support they need in the legal system. Whether you’re seeking advice, looking for guidance on bail, or need a quick understanding of legal terms, I’m here to help."
+  "mymission"      : "My mission is to make sure everyone gets the support they need in the legal system. Whether you’re seeking advice, looking for guidance on bail, or need a quick understanding of legal terms, I’m here to help.",
   "getstarted"     : "Get Started",
   "makinglegal"    : "Making Legal Support Legal Support Clear and Accessible.",
   "isimplify"      : "I simplify complex legal terms and processes, helping regular users understand their rights and options. Whether facing a legal issue or navigating the bail process, I provide clear, straightforward guidance. My goal is to ensure everyone has access to reliable legal support, regardless of who they are.",
@@ -30,7 +30,7 @@
   "dateofbirth"    : "Date of birth",
   "notavailable"   : "Not Available",
   "address"        : "Address",
-  "Logout"         : "Logout",
+  "logout"         : "Logout",
   "clicktoupload"  : "Click to upload",
   "save"           : "Save",
   "cancel"         : "Cancel",
@@ -39,7 +39,7 @@
   "viewfir"        : "View FIR",
   "booknumber"     : "Book Number",
   "formnumber"     : "Form Number",
-  "policestationame: "Police Station Name",
+  "policestationame": "Police Station Name",
   "district"       : "District",
   "dhoccurrence"   : "Date/Hour of Occurrence",
   "dhreported"     : "Date/Hour Reported",
