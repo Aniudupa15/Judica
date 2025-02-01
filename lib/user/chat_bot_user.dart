@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences // Import share package
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
-import '../common_pages/lawgpt_service.dart'; // For encoding/decoding chat history to/from JSON
+import '../common_pages/lawgpt_service.dart';
 
 class ChatScreenUser extends StatefulWidget {
   const ChatScreenUser({super.key});
@@ -15,16 +16,19 @@ class ChatScreenUser extends StatefulWidget {
 class _ChatScreenUserState extends State<ChatScreenUser> {
   final LawGPTService service = LawGPTService();
   final TextEditingController controller = TextEditingController();
-  bool isLoading = false; // Indicate loading state
-  List<Map<String, String>> chatHistory = []; // Store as question-answer pairs
+  bool isLoading = false;
+  List<Map<String, String>> chatHistory = [];
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  String _text = "Tap the microphone to start";
 
   @override
   void initState() {
     super.initState();
-    _loadChatHistory(); // Load chat history when the screen is initialized
+    _loadChatHistory();
+    _initSpeech();
   }
 
-  // Load the chat history from SharedPreferences
   Future<void> _loadChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String? savedHistory = prefs.getString('chat_history');
@@ -38,16 +42,14 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
     }
   }
 
-  // Save the chat history to SharedPreferences
   Future<void> _saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedHistory = json.encode(chatHistory);
     prefs.setString('chat_history', encodedHistory);
   }
 
-  // Ask a question and get an answer
   void askQuestion() async {
-    if (controller.text.trim().isEmpty) return; // Prevent empty questions
+    if (controller.text.trim().isEmpty) return;
 
     setState(() {
       isLoading = true;
@@ -64,8 +66,6 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
         chatHistory.add({"question": question, "answer": answer});
       });
       controller.clear();
-
-      // Save updated chat history
       await _saveChatHistory();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -78,21 +78,48 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
     }
   }
 
-  // Delete a chat entry
   void deleteMessage(int index) async {
     setState(() {
       chatHistory.removeAt(index);
     });
-
-    // Save updated chat history after deletion
     await _saveChatHistory();
   }
 
-  // Share a chat message
   void shareMessage(int index) {
     final entry = chatHistory[index];
     final message = "You: ${entry['question']}\nLawGPT: ${entry['answer']}";
-    Share.share(message); // Now properly importing and using share functionality
+    Share.share(message);
+  }
+
+  void _initSpeech() async {
+    bool available = await _speech.initialize();
+    if (!available) {
+      setState(() {
+        _text = "Speech recognition is not available.";
+      });
+    }
+  }
+
+  void _startListening() async {
+    if (!_isListening) {
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+      );
+      setState(() {
+        _isListening = true;
+      });
+    }
+  }
+
+  void _stopListening() async {
+    await _speech.stop();
+    setState(() {
+      _isListening = false;
+    });
   }
 
   @override
@@ -100,19 +127,16 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/ChatBotBackground.jpg"), // Replace with your image path
+                image: AssetImage("assets/ChatBotBackground.jpg"),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // Chat content
           Column(
             children: [
-              // Chat history display
               Expanded(
                 child: ListView.builder(
                   itemCount: chatHistory.length,
@@ -129,7 +153,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                               color: Colors.black,
                             ),
                           ),
-                          tileColor: Colors.grey[300]?.withOpacity(0.8), // Semi-transparent
+                          tileColor: Colors.grey[300]?.withOpacity(0.8),
                           trailing: PopupMenuButton<String>(
                             onSelected: (value) {
                               if (value == 'delete') {
@@ -155,20 +179,18 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                             "LawGPT: ${entry['answer']}",
                             style: const TextStyle(color: Colors.black),
                           ),
-                          tileColor: Colors.white.withOpacity(0.8), // Semi-transparent
+                          tileColor: Colors.white.withOpacity(0.8),
                         ),
                       ],
                     );
                   },
                 ),
               ),
-              // Loading indicator
               if (isLoading)
                 const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: CircularProgressIndicator(),
                 ),
-              // Input field
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
@@ -178,28 +200,30 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                         controller: controller,
                         decoration: InputDecoration(
                           hintText: "Ask a question...",
-                          hintStyle: const TextStyle(color: Colors.black54),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.8),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onSubmitted: (value) {
-                          askQuestion();
-                        },
                       ),
                     ),
-                    const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.send),
-                      color: Theme.of(context).primaryColor,
-                      onPressed: askQuestion,
+                      icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+                      color: Colors.red,
+                      onPressed: () {
+                        _isListening ? _stopListening() : _startListening();
+                      },
                     ),
+                    if (controller.text.trim().isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        color: Theme.of(context).primaryColor,
+                        onPressed: askQuestion,
+                      ),
                   ],
                 ),
               ),
-
             ],
           ),
         ],
