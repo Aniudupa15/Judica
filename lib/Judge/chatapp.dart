@@ -1,137 +1,121 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_realtime_chat/model/user.dart';
+import 'package:firebase_realtime_chat/views/individual_chat/chatroom_view.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:judica/Judge/chatapp.dart';
+import 'package:judica/auth/firebase_options.dart';
 
-class AdvocateChatPage extends StatefulWidget {
-  final String receiverId;
-  final String receiverName;
-
-  AdvocateChatPage({
-    Key? key,
-    required this.receiverId,
-    required this.receiverName,
-  }) : super(key: key);
+class OpenChatRoomViewa extends StatefulWidget {
+  const OpenChatRoomViewa({super.key});
 
   @override
-  _AdvocateChatPageState createState() => _AdvocateChatPageState();
+  State<OpenChatRoomViewa> createState() => _OpenChatRoomViewaState();
 }
 
-class _AdvocateChatPageState extends State<AdvocateChatPage> {
-  final TextEditingController _messageController = TextEditingController();
-  final User? _currentUser = FirebaseAuth.instance.currentUser;
-  late String chatId;
+class _OpenChatRoomViewaState extends State<OpenChatRoomViewa> {
+  User? currentUser;
+  Future<DocumentSnapshot?>? currentUserDocFuture;
+
+  UserModel otherUser = UserModel(
+    userId: 'other@example.com',
+    email: 'other@example.com',
+    name: 'John Doe',
+    profile: 'https://www.example.com/profile.jpg',
+  );
 
   @override
   void initState() {
     super.initState();
-    chatId = _generateChatId(_currentUser!.uid, widget.receiverId);
+    _loadCurrentUser();
   }
 
-  String _generateChatId(String userId, String receiverId) {
-    return userId.hashCode <= receiverId.hashCode
-        ? '${userId}_$receiverId'
-        : '${receiverId}_$userId';
-  }
+  Future<void> _loadCurrentUser() async {
+    currentUser = FirebaseAuth.instance.currentUser;
 
-  Future<void> _sendMessage(String content) async {
-    if (content.trim().isEmpty) return;
-
-    try {
-      await FirebaseFirestore.instance.collection('advocate_chats').doc(chatId).collection('messages').add({
-        'sender': _currentUser!.uid,
-        'content': content,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      _messageController.clear();
-    } catch (e) {
-      print('Error sending message: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send message.')),
-      );
+    if (currentUser != null) {
+      currentUserDocFuture = FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser!.email)
+          .get()
+          .then((doc) => doc.exists ? doc : null);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.receiverName),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
+      body: FutureBuilder<DocumentSnapshot?>(
+        future: currentUserDocFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (snapshot.hasData && snapshot.data != null) {
+            var userData = snapshot.data!.data() as Map<String, dynamic>;
+
+            UserModel currentUserModel = UserModel(
+              userId: currentUser!.email!,
+              email: currentUser!.email!,
+              name: userData['name'] ?? 'User',
+              profile: userData['profile'] ?? '',
+            );
+
+            return StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
-                  .collection('advocate_chats')
-                  .doc(chatId)
                   .collection('messages')
+                  .where('senderId', isEqualTo: currentUser!.email!)
                   .orderBy('timestamp', descending: true)
                   .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+              builder: (context, messageSnapshot) {
+                if (messageSnapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
                 }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text('No messages yet.'),
-                  );
+
+                if (messageSnapshot.hasError) {
+                  return Center(child: Text('Error: ${messageSnapshot.error}'));
                 }
-                final messages = snapshot.data!.docs.toList();
+
+                if (!messageSnapshot.hasData || messageSnapshot.data!.docs.isEmpty) {
+                  return Center(child: Text('No messages found'));
+                }
+
+                var messages = messageSnapshot.data!.docs;
 
                 return ListView.builder(
-                  reverse: true,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final messageDoc = messages[index];
-                    final message = messageDoc.data() as Map<String, dynamic>;
-                    final senderId = message['sender'] ?? 'Unknown';
-                    final isCurrentUser = senderId == _currentUser?.uid;
-                    final content = message['content'] ?? '';
-
-                    return Align(
-                      alignment: isCurrentUser
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isCurrentUser ? Colors.blue : Colors.grey,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          content,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
+                    var messageData = messages[index].data() as Map<String, dynamic>;
+                    return ListTile(
+                      title: Text(messageData['message'] ?? ''),
+                      subtitle: Text(messageData['timestamp'].toDate().toString()),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ChatRoomView(
+                              imageDownloadButton: true,
+                              senderMember: currentUserModel,
+                              receiverMember: otherUser,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
               },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Write a message...',
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () => _sendMessage(_messageController.text),
-                ),
-              ],
-            ),
-          ),
-        ],
+            );
+          }
+
+          return Center(child: Text('User not found'));
+        },
       ),
     );
   }

@@ -119,4 +119,7 @@ class AuthServices {
       );
     }
   }
+  User? getCurrentUser() {
+    return _auth.currentUser;
+  }
 }

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+import 'package:flutter_tts/flutter_tts.dart'; // Import FlutterTts
 
 import '../common_pages/lawgpt_service.dart';
 
@@ -23,6 +24,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
   bool _isListening = false;
   String _text = "Tap the microphone to start";
   String _selectedLanguage = 'en-IN'; // Default language
+  final FlutterTts flutterTts = FlutterTts(); // Initialize FlutterTts
 
   // List of Indian languages with their locale codes
   final Map<String, String> indianLanguages = {
@@ -44,6 +46,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
     super.initState();
     _loadChatHistory();
     _initSpeech();
+    _initTts(); // Initialize TTS
   }
 
   Future<void> _loadChatHistory() async {
@@ -84,6 +87,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
       });
       controller.clear();
       await _saveChatHistory();
+      _speak(answer); // Speak the answer
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -140,6 +144,20 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
     });
   }
 
+  // Initialize TTS
+  void _initTts() async {
+    await flutterTts.setLanguage(_selectedLanguage); // Set the initial language
+    await flutterTts.setSpeechRate(0.5); // Adjust speech rate if needed
+    await flutterTts.setVolume(1.0); // Set volume
+    await flutterTts.setPitch(1.0); // Set pitch
+  }
+
+  // Speak the text
+  Future<void> _speak(String text) async {
+    await flutterTts.setLanguage(_selectedLanguage); // Set language before speaking
+    await flutterTts.speak(text);
+  }
+
   // Method to get font style based on selected language
   TextStyle getFontStyleForLanguage(String languageCode) {
     switch (languageCode) {
@@ -167,7 +185,6 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
         return GoogleFonts.roboto();
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -192,6 +209,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                     setState(() {
                       _selectedLanguage = newValue!;
                     });
+                    _initTts(); // Reinitialize TTS with the new language
                   },
                   items: indianLanguages.entries.map((entry) {
                     return DropdownMenuItem<String>(
@@ -224,6 +242,8 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                                 deleteMessage(index);
                               } else if (value == 'share') {
                                 shareMessage(index);
+                              } else if (value == 'speak') {
+                                _speak(entry['answer']!); // Speak the answer
                               }
                             },
                             itemBuilder: (BuildContext context) => [
@@ -234,6 +254,10 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                               const PopupMenuItem<String>(
                                 value: 'share',
                                 child: Text('Share'),
+                              ),
+                              const PopupMenuItem<String>(
+                                value: 'speak',
+                                child: Text('Speak'),
                               ),
                             ],
                           ),
@@ -246,6 +270,12 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                             ),
                           ),
                           tileColor: Colors.white.withOpacity(0.8),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.volume_up),
+                            onPressed: () {
+                              _speak(entry['answer']!); // Speak the answer
+                            },
+                          ),
                         ),
                       ],
                     );
@@ -273,6 +303,10 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                           ),
                         ),
                         style: getFontStyleForLanguage(_selectedLanguage),
+                        onChanged: (text) {
+                          // Update the state when text changes
+                          setState(() {});
+                        },
                       ),
                     ),
                     IconButton(
@@ -282,12 +316,14 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                         _isListening ? _stopListening() : _startListening();
                       },
                     ),
-                    if (controller.text.trim().isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        color: Theme.of(context).primaryColor,
-                        onPressed: askQuestion,
-                      ),
+                    // Send button (only enabled if there is text)
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      color: controller.text.isNotEmpty
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                      onPressed: controller.text.isNotEmpty ? askQuestion : null,
+                    ),
                   ],
                 ),
               ),
@@ -296,5 +332,4 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
         ],
       ),
     );
-  }
-}
+  }}

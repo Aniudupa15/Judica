@@ -10,7 +10,8 @@ class GovernmentInfo extends StatelessWidget {
       length: 2, // Two tabs: one for surveys, one for announcements
       child: Scaffold(
         appBar: AppBar(
-          title: Text("Government Schemes & Legal Rights"),
+          title: Text("Notifications"),
+          backgroundColor: const Color.fromRGBO(255, 165, 89, 1),
           bottom: TabBar(
             tabs: [
               Tab(text: "Surveys"),
@@ -63,55 +64,66 @@ class _SurveyTabState extends State<SurveyTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: [
-          // Surveys List
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('surveys').snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return Center(child: Text("No surveys available."));
-                }
+    return Scaffold(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
 
-                final surveys = snapshot.data!.docs.where((survey) {
-                  // Exclude surveys that the user has already answered
-                  return !answeredSurveyIds.contains(survey.id);
-                }).toList();
-
-                return ListView.builder(
-                  itemCount: surveys.length,
-                  itemBuilder: (context, index) {
-                    final survey = surveys[index];
-                    return Card(
-                      elevation: 3,
-                      child: ListTile(
-                        title: Text(
-                          survey['title'] ?? "Untitled Survey",
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        trailing: Icon(Icons.check_circle_outline),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SurveyPage(survey: survey),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
-                );
-              },
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage("assets/ChatBotBackground.jpg"),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
-          ),
-        ],
+            // Surveys List
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: FirebaseFirestore.instance.collection('surveys').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(child: Text("No surveys available."));
+                  }
+
+                  final surveys = snapshot.data!.docs.where((survey) {
+                    // Exclude surveys that the user has already answered
+                    return !answeredSurveyIds.contains(survey.id);
+                  }).toList();
+
+                  return ListView.builder(
+                    itemCount: surveys.length,
+                    itemBuilder: (context, index) {
+                      final survey = surveys[index];
+                      return Card(
+                        elevation: 3,
+                        child: ListTile(
+                          title: Text(
+                            survey['title'] ?? "Untitled Survey",
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          trailing: Icon(Icons.check_circle_outline),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SurveyPage(survey: survey),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -217,6 +229,7 @@ class _SurveyPageState extends State<SurveyPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.survey['title'] ?? "Survey Details"),
+        backgroundColor: const Color.fromRGBO(255, 165, 89, 1),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -339,6 +352,7 @@ class AnnouncementDetailsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(announcement['title'] ?? "Announcement Details"),
+        backgroundColor: const Color.fromRGBO(255, 165, 89, 1),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),

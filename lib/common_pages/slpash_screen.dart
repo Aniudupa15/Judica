@@ -1,10 +1,10 @@
-
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:lottie/lottie.dart';
 import 'login.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -59,6 +59,29 @@ class _SplashScreenState extends State<SplashScreen> {
     });
   }
 
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Select Language"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: languageMap.entries.map((entry) {
+              return ListTile(
+                title: Text(entry.value),
+                onTap: () {
+                  _changeLanguage(entry.key);
+                  Navigator.pop(context);
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -72,6 +95,16 @@ class _SplashScreenState extends State<SplashScreen> {
         GlobalCupertinoLocalizations.delegate,
       ],
       home: Scaffold(
+        appBar: AppBar(
+          backgroundColor:Colors.transparent,
+          elevation: 0,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.language, color: Colors.black),
+              onPressed: _showLanguageDialog,
+            ),
+          ],
+        ),
         body: Stack(
           alignment: Alignment.center,
           children: [
@@ -85,23 +118,6 @@ class _SplashScreenState extends State<SplashScreen> {
             ),
             Column(
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: DropdownButton<String>(
-                    value: _selectedLanguage,
-                    onChanged: (String? newLang) {
-                      if (newLang != null) {
-                        _changeLanguage(newLang);
-                      }
-                    },
-                    items: languageMap.entries
-                        .map((entry) => DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ))
-                        .toList(),
-                  ),
-                ),
                 Expanded(
                   child: PageView.builder(
                     controller: _pageController,

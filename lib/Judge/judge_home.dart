@@ -21,9 +21,10 @@ class _UserHomeState extends State<AdvocateHome> {
   // Define the pages for navigation
   static final List<Widget> _pages = <Widget>[
     const Bailpage(), // FIR-related component
-    const ChatScreenJudge(), // Placeholder for Home Page
+    const ChatScreenJudge(),
+    OpenChatRoomViewa(),// Placeholder for Home Page
     const ProfilePage(),
-    AdvocateChatPage(receiverId: "123", receiverName: "Advocate")
+
   ];
 
   // Function to handle tab selection
@@ -84,23 +85,22 @@ class _UserHomeState extends State<AdvocateHome> {
             label: 'Bail',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
+            icon: Icon(Icons.account_box_rounded),
             label: 'ChatBot',
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble),
             label: 'chat',
           ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+
         ],
         currentIndex: _selectedIndex, // Highlight the selected tab
-        selectedItemColor: Colors.white, // Selected icon color
+        selectedItemColor: Colors.black, // Selected icon color
         unselectedItemColor: Colors.black54, // Unselected icon color
-        backgroundColor: const Color.fromRGBO(255, 165, 89, 1),  // Selected icon color
         onTap: _onItemTapped, // Handle tab selection
       ),
     );

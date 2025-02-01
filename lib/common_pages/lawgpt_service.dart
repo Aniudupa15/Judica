@@ -1,8 +1,9 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class LawGPTService {
-  final String baseUrl = "https://aniudupa-fir-gen.hf.space/lawgpt/";
+  final String baseUrl = "wss://aniudupa-fir-gen.hf.space/lawgpt/";
 
   Future<String> askQuestion(String question, List<String> chatHistory) async {
     try {
@@ -15,8 +16,12 @@ class LawGPTService {
         }),
       );
 
-      print("Response Status Code: ${response.statusCode}"); // Debugging
-      print("Raw Response Body: ${response.body}"); // Debugging
+      if (kDebugMode) {
+        print("Response Status Code: ${response.statusCode}");
+      } // Debugging
+      if (kDebugMode) {
+        print("Raw Response Body: ${response.body}");
+      } // Debugging
 
       if (response.statusCode == 200) {
         String rawBody = utf8.decode(response.bodyBytes).trim();
@@ -28,11 +33,15 @@ class LawGPTService {
         final responseData = jsonDecode(rawBody);
         return responseData["answer"];
       } else {
-        print("Server Error: ${response.statusCode}, Response: ${response.body}");
+        if (kDebugMode) {
+          print("Server Error: ${response.statusCode}, Response: ${response.body}");
+        }
         throw Exception("Server error: ${response.statusCode}, Response: ${response.body}");
       }
     } catch (e) {
-      print("An error occurred while connecting to LawGPT API: $e");
+      if (kDebugMode) {
+        print("An error occurred while connecting to LawGPT API: $e");
+      }
       throw Exception("An error occurred while connecting to LawGPT API: $e");
     }
   }
@@ -48,10 +57,16 @@ void main() async {
       "What are the provisions under it?"
     ];
 
-    print("Sending question to LawGPT...");
+    if (kDebugMode) {
+      print("Sending question to LawGPT...");
+    }
     final answer = await service.askQuestion(question, chatHistory);
-    print("LawGPT Answer: $answer");
+    if (kDebugMode) {
+      print("LawGPT Answer: $answer");
+    }
   } catch (e) {
-    print("Error: $e");
+    if (kDebugMode) {
+      print("Error: $e");
+    }
   }
 }

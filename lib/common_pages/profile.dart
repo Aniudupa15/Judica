@@ -16,11 +16,11 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String? userName;
-  String? email;
-  String? mobileNumber;
-  String? dateOfBirth;
-  String? address;
+  String userName = "N/A";
+  String email = "N/A";
+  String mobileNumber = "N/A";
+  String dateOfBirth = "N/A";
+  String address = "N/A";
   String? imageUrl;
 
   final ImagePicker _picker = ImagePicker();
@@ -35,22 +35,21 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> fetchUserData() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.email)
-            .get();
+      if (currentUser == null) return;
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.email)
+          .get();
 
-        if (userDoc.exists) {
-          setState(() {
-            userName = userDoc.data()?['username'];
-            email = userDoc.data()?['email'];
-            mobileNumber = userDoc.data()?['Mobile Number'];
-            dateOfBirth = userDoc.data()?['Date of Birth'];
-            address = userDoc.data()?['Address'];
-            imageUrl = userDoc.data()?['imageUrl'];
-          });
-        }
+      if (userDoc.exists) {
+        setState(() {
+          userName = userDoc.data()?['username'] ?? "N/A";
+          email = userDoc.data()?['email'] ?? "N/A";
+          mobileNumber = userDoc.data()?['Mobile Number'] ?? "N/A";
+          dateOfBirth = userDoc.data()?['Date of Birth'] ?? "N/A";
+          address = userDoc.data()?['Address'] ?? "N/A";
+          imageUrl = userDoc.data()?['imageUrl'];
+        });
       }
     } catch (e) {
       if (kDebugMode) {
@@ -62,140 +61,32 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> saveUserData(String field, String value) async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser != null) {
-        await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.email)
-            .update({field: value});
+      if (currentUser == null) return;
 
-        setState(() {
-          if (field == 'username') userName = value;
-          if (field == 'email') email = value;
-          if (field == 'Mobile Number') mobileNumber = value;
-          if (field == 'Date of Birth') dateOfBirth = value;
-          if (field == 'Address') address = value;
-        });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser.email)
+          .update({field: value});
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Changes saved successfully!'),
-            duration: Duration(seconds: 2),
-          ),
-        );
-      }
+      setState(() {
+        if (field == 'username') userName = value;
+        if (field == 'email') email = value;
+        if (field == 'Mobile Number') mobileNumber = value;
+        if (field == 'Date of Birth') dateOfBirth = value;
+        if (field == 'Address') address = value;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Changes saved successfully!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     } catch (e) {
       if (kDebugMode) {
         print("Error saving user data: $e");
       }
     }
-  }
-
-  Future<void> _showEditDialog(String title, String field, String initialValue) async {
-    final TextEditingController controller = TextEditingController(text: initialValue);
-
-    if (field == 'Date of Birth') {
-      // Open a date picker for Date of Birth with custom colors
-      DateTime? pickedDate = await showDatePicker(
-        context: context,
-        initialDate: DateTime.now(),
-        firstDate: DateTime(1900),
-        lastDate: DateTime.now(),
-        builder: (context, child) {
-          return Theme(
-            data: ThemeData.dark().copyWith(
-              primaryColor: const Color.fromRGBO(255, 125, 41, 1), // Primary color for date selection
-              hintColor: const Color.fromRGBO(255, 125, 41, 1), // Accent color for buttons
-              buttonTheme: const ButtonThemeData(
-                textTheme: ButtonTextTheme.primary, // Button text theme
-              ),
-              colorScheme: const ColorScheme.dark(
-                primary: Color.fromRGBO(255, 125, 41, 1), // Custom primary color
-                onPrimary: Colors.white, // Text color for primary button
-                onSurface: Colors.white, // Text color for surface (calendar days)
-              ),
-              dialogBackgroundColor: const Color.fromRGBO(250, 249, 246, 1), // Background color
-            ),
-            child: child!,
-          );
-        },
-      );
-
-      if (pickedDate != null) {
-        controller.text = "${pickedDate.toLocal()}".split(' ')[0]; // Format the date
-        saveUserData(field, controller.text);
-        return;
-      }
-    }
-
-    await showDialog(
-      context: context,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          backgroundColor: const Color.fromRGBO(250, 249, 246, 1), // Same background color as profile page
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Edit $title',
-                  style: const TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black, // Text color to match the profile
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: controller,
-                  decoration: InputDecoration(
-                    hintText: "Enter new $title",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    fillColor: Colors.white,
-                    filled: true,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop(); // Close dialog
-                      },
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color.fromRGBO(255, 125, 41, 1), // Cancel button color
-                      ),
-                      child: Text(AppLocalizations.of(context)!.cancel),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (controller.text.isNotEmpty) {
-                          saveUserData(field, controller.text);
-                        }
-                        Navigator.of(context).pop(); // Close dialog
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white, backgroundColor: const Color.fromRGBO(255, 125, 41, 1),
-                      ),
-                      child: Text(AppLocalizations.of(context)!.save),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
   }
 
   Future<void> _requestPermissions() async {
@@ -218,91 +109,89 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _logout() async {
-    await FirebaseAuth.instance.signOut(); // Sign out the user
+    await FirebaseAuth.instance.signOut();
     Navigator.pushReplacement(
         context, MaterialPageRoute(builder: (context) => const SplashScreen()));
+  }
+
+  void _showEditDialog(String title, String field, String currentValue) {
+    TextEditingController controller = TextEditingController(text: currentValue);
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit $title'),
+          content: TextField(
+            controller: controller,
+            decoration: InputDecoration(hintText: 'Enter new $title'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                saveUserData(field, controller.text);
+                Navigator.pop(context);
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromRGBO(250, 249, 246, 1),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 50),
-                  GestureDetector(
-                    onTap: _pickImage,
-                    child: Container(
-                      padding: const EdgeInsets.all(2), // Adds space around the avatar for the border
-                      decoration: BoxDecoration(
-                        color: const Color.fromRGBO(255, 125, 41, 1), // Border color
-                        shape: BoxShape.circle, // Keeps the container circular
-                        border: Border.all(
-                          color: const Color.fromRGBO(255, 125, 41, 1), // Border color (change as needed)
-                          width: 4, // Border width
-                        ),
+      body: SingleChildScrollView(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 50),
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 85,
+                    backgroundImage: imageUrl != null ? FileImage(File(imageUrl!)) : null,
+                    child: imageUrl == null
+                        ? Center(
+                      child: Text(
+                        AppLocalizations.of(context)?.clicktoupload ?? "Upload Image",
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
-                      child: CircleAvatar(
-                          radius: 85, // Avatar radius
-                          backgroundColor: Colors.transparent, // Transparent background inside the avatar
-                          child:ClipOval(
-                            child: imageUrl != null
-                                ? Image.file(
-                              File(imageUrl!),
-                              fit: BoxFit.cover, // Ensure the image fits the circle properly
-                              width: 170, // Adjust width to match radius
-                              height: 170, // Adjust height to match radius
-                            )
-                                : Center( // Show a message when imageUrl is null
-                              child: Text(
-                                AppLocalizations.of(context)!.clicktoupload, // Message text
-                                textAlign: TextAlign.center, // Center align the text
-                                style: TextStyle(
-                                  color: Colors.white, // Text color
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          )
-
-                      ),
-                    ),
+                    )
+                        : null,
                   ),
-
-
-                  const SizedBox(height: 30),
-                  // Editable fields using DialogBox
-                  buildEditableField(AppLocalizations.of(context)!.name, userName,AppLocalizations.of(context)!.username),
-                  const SizedBox(height: 15),
-                  buildEditableField(AppLocalizations.of(context)!.email, email,AppLocalizations.of(context)!.email),
-                  const SizedBox(height: 15),
-                  buildEditableField(AppLocalizations.of(context)!.mobilenumber, mobileNumber, AppLocalizations.of(context)!.mobilenumber),
-                  const SizedBox(height: 15),
-                  buildEditableField(AppLocalizations.of(context)!.dateOfBirth, dateOfBirth,AppLocalizations.of(context)!.dateOfBirth),
-                  const SizedBox(height: 15),
-                  buildEditableField(AppLocalizations.of(context)!.address, address, AppLocalizations.of(context)!.address),
-                  const SizedBox(height: 30), // Space before logout button
-                  ElevatedButton(
-                    onPressed: _logout,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color.fromRGBO(255, 125, 41, 1),
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                      textStyle: const TextStyle(fontSize: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: Text(AppLocalizations.of(context)!.logout),
+                ),
+                const SizedBox(height: 30),
+                buildEditableField("Name", userName, "username"),
+                const SizedBox(height: 15),
+                buildEditableField("Email", email, "email"),
+                const SizedBox(height: 15),
+                buildEditableField("Mobile Number", mobileNumber, "Mobile Number"),
+                const SizedBox(height: 15),
+                buildEditableField("Date of Birth", dateOfBirth, "Date of Birth"),
+                const SizedBox(height: 15),
+                buildEditableField("Address", address, "Address"),
+                const SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: _logout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromRGBO(255, 125, 41, 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
-                ],
-              ),
+                  child: Text(AppLocalizations.of(context)?.logout ?? "Logout"),
+                ),
+              ],
             ),
           ),
         ),
@@ -310,35 +199,21 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget buildEditableField(String title, String? value, String field) {
+  Widget buildEditableField(String title, String value, String field) {
     return GestureDetector(
-      onTap: () => _showEditDialog(title, field, value ?? ''),
+      onTap: () => _showEditDialog(title, field, value),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: const Color.fromRGBO(255, 125, 41, 1),
-            width: 2,
-          ),
+          border: Border.all(color: const Color.fromRGBO(255, 125, 41, 1), width: 2),
           color: Colors.white,
         ),
         child: Row(
           children: [
-            Text(
-              '$title: ',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-            // Wrap the value with a Flexible widget to avoid overflow
+            Text('$title: ', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             Flexible(
-              child: Text(
-                value ?? AppLocalizations.of(context)!.notavailable,
-                style: const TextStyle(fontSize: 16),
-                overflow: TextOverflow.ellipsis, // Add ellipsis for long text
-              ),
+              child: Text(value, style: const TextStyle(fontSize: 16), overflow: TextOverflow.ellipsis),
             ),
           ],
         ),
