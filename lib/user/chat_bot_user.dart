@@ -3,6 +3,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 
 import '../common_pages/lawgpt_service.dart';
 
@@ -21,6 +22,22 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
   String _text = "Tap the microphone to start";
+  String _selectedLanguage = 'en-IN'; // Default language
+
+  // List of Indian languages with their locale codes
+  final Map<String, String> indianLanguages = {
+    'English (India)': 'en-IN',
+    'Hindi (India)': 'hi-IN',
+    'Bengali (India)': 'bn-IN',
+    'Telugu (India)': 'te-IN',
+    'Marathi (India)': 'mr-IN',
+    'Tamil (India)': 'ta-IN',
+    'Urdu (India)': 'ur-IN',
+    'Gujarati (India)': 'gu-IN',
+    'Kannada (India)': 'kn-IN',
+    'Malayalam (India)': 'ml-IN',
+    'Punjabi (India)': 'pa-IN',
+  };
 
   @override
   void initState() {
@@ -108,6 +125,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
             controller.text = result.recognizedWords;
           });
         },
+        localeId: _selectedLanguage, // Set the selected language
       );
       setState(() {
         _isListening = true;
@@ -120,6 +138,34 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
     setState(() {
       _isListening = false;
     });
+  }
+
+  // Method to get font style based on selected language
+  TextStyle getFontStyleForLanguage(String languageCode) {
+    switch (languageCode) {
+      case 'hi-IN': // Hindi
+        return GoogleFonts.notoSansDevanagari();
+      case 'bn-IN': // Bengali
+        return GoogleFonts.notoSansBengali();
+      case 'te-IN': // Telugu
+        return GoogleFonts.notoSansTelugu();
+      case 'mr-IN': // Marathi
+        return GoogleFonts.notoSansDevanagari();
+      case 'ta-IN': // Tamil
+        return GoogleFonts.notoSansTamil();
+      case 'ur-IN': // Urdu
+        return GoogleFonts.notoNastaliqUrdu();
+      case 'gu-IN': // Gujarati
+        return GoogleFonts.notoSansGujarati();
+      case 'kn-IN': // Kannada
+        return GoogleFonts.notoSansKannada();
+      case 'ml-IN': // Malayalam
+        return GoogleFonts.notoSansMalayalam();
+      case 'pa-IN': // Punjabi
+        return GoogleFonts.notoSansGurmukhi();
+      default: // English and others
+        return GoogleFonts.roboto();
+    }
   }
 
   @override
@@ -137,6 +183,24 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
           ),
           Column(
             children: [
+              // Language selection dropdown
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: DropdownButton<String>(
+                  value: _selectedLanguage,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedLanguage = newValue!;
+                    });
+                  },
+                  items: indianLanguages.entries.map((entry) {
+                    return DropdownMenuItem<String>(
+                      value: entry.value,
+                      child: Text(entry.key),
+                    );
+                  }).toList(),
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
                   itemCount: chatHistory.length,
@@ -148,7 +212,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                         ListTile(
                           title: Text(
                             "You: ${entry['question']}",
-                            style: TextStyle(
+                            style: getFontStyleForLanguage(_selectedLanguage).copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
@@ -177,7 +241,9 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                         ListTile(
                           title: Text(
                             "LawGPT: ${entry['answer']}",
-                            style: const TextStyle(color: Colors.black),
+                            style: getFontStyleForLanguage(_selectedLanguage).copyWith(
+                              color: Colors.black,
+                            ),
                           ),
                           tileColor: Colors.white.withOpacity(0.8),
                         ),
@@ -206,6 +272,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
+                        style: getFontStyleForLanguage(_selectedLanguage),
                       ),
                     ),
                     IconButton(

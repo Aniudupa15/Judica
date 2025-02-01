@@ -6,7 +6,9 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
-        >
+        ><meta-data
+        android:name="flutter.embedding.android.ActivityAware"
+        android:value="true"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
