@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ComplaintManagementDashboard extends StatefulWidget {
   @override
   _ComplaintManagementDashboardState createState() =>
@@ -46,8 +46,8 @@ class _ComplaintManagementDashboardState
           bottom: TabBar(
             controller: _tabController,
             tabs: [
-              Tab(text: "Active Complaints"), // Tab with text for Active Complaints
-              Tab(text: "Resolved Complaints"), // Tab with text for Resolved Complaints
+              Tab(text: AppLocalizations.of(context)!.active), // Tab with text for Active Complaints
+              Tab(text: AppLocalizations.of(context)!.resolvedcomplaints), // Tab with text for Resolved Complaints
             ],
           ),
         ),
@@ -74,7 +74,7 @@ class _ComplaintManagementDashboardState
                         foregroundColor: Colors.white,
                         backgroundColor: _selectedPriority == 'All' ? Colors.blue : Colors.grey,
                       ),
-                      child: Text("All"),
+                      child: Text(AppLocalizations.of(context)!.all),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -86,7 +86,7 @@ class _ComplaintManagementDashboardState
                         foregroundColor: Colors.white,
                         backgroundColor: _selectedPriority == 'High' ? Colors.blue : Colors.grey,
                       ),
-                      child: Text("High"),
+                      child: Text(AppLocalizations.of(context)!.high),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -98,7 +98,7 @@ class _ComplaintManagementDashboardState
                         foregroundColor: Colors.white,
                         backgroundColor: _selectedPriority == 'Medium' ? Colors.blue : Colors.grey,
                       ),
-                      child: Text("Medium"),
+                      child: Text(AppLocalizations.of(context)!.medium),
                     ),
                     ElevatedButton(
                       onPressed: () {
@@ -110,7 +110,7 @@ class _ComplaintManagementDashboardState
                         foregroundColor: Colors.white,
                         backgroundColor: _selectedPriority == 'Low' ? Colors.blue : Colors.grey,
                       ),
-                      child: Text("Low"),
+                      child: Text(AppLocalizations.of(context)!.low),
                     ),
                   ],
                 ),

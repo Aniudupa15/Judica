@@ -9,6 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:open_file/open_file.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:io';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class FirComponent extends StatefulWidget {
   const FirComponent({super.key});
@@ -301,9 +302,9 @@ class _FirComponentState extends State<FirComponent> with SingleTickerProviderSt
             children: [
               TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Generate FIR'),
-                  Tab(text: 'View FIRs'),
+                tabs: [
+                  Tab(text: AppLocalizations.of(context)!.generatefir),
+                  Tab(text: AppLocalizations.of(context)!.viewfir),
                 ],
                 labelColor: Colors.orange, // Active tab label color
                 unselectedLabelColor: Colors.black, // Inactive tab label color
@@ -334,18 +335,18 @@ class _FirComponentState extends State<FirComponent> with SingleTickerProviderSt
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField(_bookNoController, 'Book Number'),
-            _buildTextField(_formNoController, 'Form Number'),
-            _buildTextField(_policeStationController, 'Police Station'),
-            _buildTextField(_districtController, 'District'),
-            _buildTextField(_dateHourOccurrenceController, 'Date/Hour of Occurrence'),
-            _buildTextField(_dateHourReportedController, 'Date/Hour Reported'),
-            _buildTextField(_informerNameController, 'Informer Name'),
-            _buildTextField(_descriptionOffenseController, 'Description of Offense'),
-            _buildTextField(_placeOccurrenceController, 'Place of Occurrence'),
-            _buildTextField(_criminalNameController, 'Criminal Name'),
-            _buildTextField(_investigationStepsController, 'Investigation Steps'),
-            _buildTextField(_dispatchTimeController, 'Dispatch Time'),
+            _buildTextField(_bookNoController, AppLocalizations.of(context)!.booknumber),
+            _buildTextField(_formNoController, AppLocalizations.of(context)!.formnumber),
+            _buildTextField(_policeStationController, AppLocalizations.of(context)!.policestationame),
+            _buildTextField(_districtController, AppLocalizations.of(context)!.district),
+            _buildTextField(_dateHourOccurrenceController, AppLocalizations.of(context)!.dhoccurrence),
+            _buildTextField(_dateHourReportedController, AppLocalizations.of(context)!.dhreported),
+            _buildTextField(_informerNameController, AppLocalizations.of(context)!.informername),
+            _buildTextField(_descriptionOffenseController, AppLocalizations.of(context)!.descripoffense),
+            _buildTextField(_placeOccurrenceController, AppLocalizations.of(context)!.placeofoccur),
+            _buildTextField(_criminalNameController, AppLocalizations.of(context)!.criminalname),
+            _buildTextField(_investigationStepsController, AppLocalizations.of(context)!.investsteps),
+            _buildTextField(_dispatchTimeController, AppLocalizations.of(context)!.dispatchtime),
             const SizedBox(height: 16.0),
             Center(
               child: ElevatedButton(
@@ -457,7 +458,8 @@ class PDFViewPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('View FIR PDF')),
+      appBar: AppBar(title: const Text(AppLocalizations.of(context)!.viewfirpdf
+      )),
       body: PDFView(
         filePath: filePath,
       ),

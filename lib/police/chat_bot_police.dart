@@ -7,7 +7,8 @@ import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
 import 'package:flutter_tts/flutter_tts.dart'; // Import FlutterTts
 
 import '../common_pages/lawgpt_service.dart';
-
+import 'dart:convert'; // For encoding/decoding chat history to/from JSON
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ChatScreenPolice extends StatefulWidget {
   const ChatScreenPolice({super.key});
 
@@ -51,7 +52,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
 
   Future<void> _loadChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? savedHistory = prefs.getString('chat_history');
+    final String? savedHistory = prefs.getString(AppLocalizations.of(context)!.chathistory);
     if (savedHistory != null) {
       final List<dynamic> decodedHistory = json.decode(savedHistory);
       setState(() {
@@ -65,7 +66,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
   Future<void> _saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedHistory = json.encode(chatHistory);
-    prefs.setString('chat_history', encodedHistory);
+    prefs.setString(AppLocalizations.of(context)!.chathistory, encodedHistory);
   }
 
   void askQuestion() async {
@@ -83,14 +84,14 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
       );
 
       setState(() {
-        chatHistory.add({"question": question, "answer": answer});
+        chatHistory.add({AppLocalizations.of(context)!.question: question, AppLocalizations.of(context)!.answer: answer});
       });
       controller.clear();
       await _saveChatHistory();
       _speak(answer); // Speak the answer
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errore)),
       );
     } finally {
       setState(() {
@@ -248,13 +249,13 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                               }
                             },
                             itemBuilder: (BuildContext context) => [
-                              const PopupMenuItem<String>(
+                              PopupMenuItem<String>(
                                 value: 'delete',
-                                child: Text('Delete Message'),
+                                child: Text(AppLocalizations.of(context)!.deletemsg),
                               ),
-                              const PopupMenuItem<String>(
+                              PopupMenuItem<String>(
                                 value: 'share',
-                                child: Text('Share'),
+                                child: Text(AppLocalizations.of(context)!.share),
                               ),
                               const PopupMenuItem<String>(
                                 value: 'speak',
@@ -265,7 +266,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                         ),
                         ListTile(
                           title: Text(
-                            "LawGPT: ${entry['answer']}",
+                            "Judica: ${entry['answer']}",
                             style: getFontStyleForLanguage(_selectedLanguage).copyWith(
                               color: Colors.black,
                             ),
@@ -296,6 +297,8 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                       child: TextField(
                         controller: controller,
                         decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context)!.askaquestion,
+                          hintStyle: const TextStyle(color: Colors.black54),
                           hintText: "Ask a question...",
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.8),

@@ -23,7 +23,6 @@
   "orcontinuewith" : "Or continue with",
   "donthaveaccount": "Dont have an account ? Signup",
   "chatbot"        : "ChatBot",
-  "askaquestion"   : "Ask a question",
   "profile"        : "Profile",
   "name"           : "Name",
   "mobilenumber"   : "Mobile Number",
@@ -49,6 +48,7 @@
   "criminalname"   : "Criminal Name",
   "investsteps"    : "Investigation Steps",
   "dispatchtime"   : "Dispatch time",
+  "nofirsavailable":"No FIRs available",
   "bail"           : "Bail",
   "statute"        : "Statute",
   "ndps"           : "NDPS",
@@ -109,145 +109,51 @@
   "users"          : "users",
   "role"           : "role",
   "judica"         :"Judica",
-"selectrole"       :"Select Role",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  "selectrole"       :"Select Role",
+"chathistory"      :"chat_history",
+"question"         :"question",
+"answer"           :"answer",
+"errore"           :"Error: $e",
+"askaquestion"     :"Ask a question...",
+"delete"           :"Delete",
+"share"            :"share",
+"deletemsg":       "Delete Message",
+"policecommunity"  :"Police Community Engagement",
+"pleaseentertitle" :"Please enter title and questions",
+"surveycreatedsuccessfully":"Survey created successfully",
+"plscmpltannouncement":"Please complete the announcement details",
+"announcementcreatedsuccessfully":"Announcement created successfully",
+"errorr"            :"Error fetching responses: $e",
+"policecommunity"   :"Police Community Engagement",
+"createsurvey"      :"Create Survey",
+"surveytitle"       :"Survey Title",
+"entersurveyquestion":"Enter Survey Question",
+"entersurveyoption":"Enter Survey Option",
+"addoption":"Add Option",
+"addquestion":"Add Question",
+"reviewsurvey":"Review Survey",
+"reviewyoursurvey":"Review Your Survey",
+"options":"Options",
+"submitsurvey":"Submit Survey",
+"editsurvey":"Edit Survey",
+"showresponses":"Show Responses",
+"createpublicannouncement":"Create Public Announcement",
+"title":"Title",
+"description":"Description",
+"scheme":"Scheme (if applicable)",
+"instruction":"Instructions",
+"submitannouncement":"Submit Announcement",
+"surveyresponses":"Survey Responses",
+"noresponseyet":"No responses yet.",
+"registrationlink":"Registration Link",
+"viewfirpdf":"View FIR PDF",
+"active":"Active Complaints",
+"resolvedcomplaints":"Resolved Complaints",
+"all":"ALL",
+"high":"High",
+"medium":"Medium",
+"low":"Low",
 "fir": "FIR",
   "main": "Main",
   "create": "Create",
-
 }
