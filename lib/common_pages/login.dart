@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -44,7 +44,7 @@ class _LoginPageState extends State<LoginPage> {
         String role = userDoc.get('role') ?? '';
         _navigateToHome(role);
       } else {
-        _displayMessageToUser('User role not found.');
+        _displayMessageToUser(AppLocalizations.of(context)!.usernotfound);
       }
     } catch (e) {
       if (mounted) Navigator.pop(context);
@@ -54,11 +54,11 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _validateFields() {
     if (emailController.text.trim().isEmpty) {
-      _displayMessageToUser('Email cannot be empty');
+      _displayMessageToUser(AppLocalizations.of(context)!.cannotemail);
       return false;
     }
     if (passwordController.text.trim().isEmpty) {
-      _displayMessageToUser('Password cannot be empty');
+      _displayMessageToUser(AppLocalizations.of(context)!.cannotpasswort);
       return false;
     }
     return true;
@@ -77,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
         homePage = const AdvocateHome();
         break;
       default:
-        _displayMessageToUser('User role not found.');
+        _displayMessageToUser(AppLocalizations.of(context)!.usernotfound);
         return;
     }
 
@@ -262,8 +262,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildSocialLogin() {
     return Column(
       children: [
-        const Text(
-          'Or continue with',
+        Text(AppLocalizations.of(context)!.continue,
           style: TextStyle(color: Colors.black),
         ),
         const SizedBox(height: 10),
@@ -304,7 +303,7 @@ class _LoginPageState extends State<LoginPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text("Don't have an account? "),
+        Text(AppLocalizations.of(context)!.account),
         GestureDetector(
           onTap: () {
             Navigator.push(
@@ -312,8 +311,7 @@ class _LoginPageState extends State<LoginPage> {
               MaterialPageRoute(builder: (context) => const RegisterPage()),
             );
           },
-          child: const Text(
-            "Sign Up",
+          child:Text(AppLocalizations.of(context)!.sign,
             style: TextStyle(color: Colors.blue),
           ),
         ),

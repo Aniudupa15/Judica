@@ -3,7 +3,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences // Import share package
 import '../common_pages/lawgpt_service.dart';
 import 'dart:convert'; // For encoding/decoding chat history to/from JSON
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ChatScreenPolice extends StatefulWidget {
   const ChatScreenPolice({super.key});
 
@@ -26,7 +26,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
   // Load the chat history from SharedPreferences
   Future<void> _loadChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? savedHistory = prefs.getString('chat_history');
+    final String? savedHistory = prefs.getString(AppLocalizations.of(context)!.chathistory);
     if (savedHistory != null) {
       final List<dynamic> decodedHistory = json.decode(savedHistory);
       setState(() {
@@ -41,7 +41,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
   Future<void> _saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedHistory = json.encode(chatHistory);
-    prefs.setString('chat_history', encodedHistory);
+    prefs.setString(AppLocalizations.of(context)!.chathistory, encodedHistory);
   }
 
   // Ask a question and get an answer
@@ -60,7 +60,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
       );
 
       setState(() {
-        chatHistory.add({"question": question, "answer": answer});
+        chatHistory.add({AppLocalizations.of(context)!.question: question, AppLocalizations.of(context)!.answer: answer});
       });
       controller.clear();
 
@@ -68,7 +68,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
       await _saveChatHistory();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(content: Text(AppLocalizations.of(context)!.errore)),
       );
     } finally {
       setState(() {
@@ -138,20 +138,20 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                               }
                             },
                             itemBuilder: (BuildContext context) => [
-                              const PopupMenuItem<String>(
+                              PopupMenuItem<String>(
                                 value: 'delete',
-                                child: Text('Delete Message'),
+                                child: Text(AppLocalizations.of(context)!.deletemsg),
                               ),
-                              const PopupMenuItem<String>(
+                              PopupMenuItem<String>(
                                 value: 'share',
-                                child: Text('Share'),
+                                child: Text(AppLocalizations.of(context)!.share),
                               ),
                             ],
                           ),
                         ),
                         ListTile(
                           title: Text(
-                            "LawGPT: ${entry['answer']}",
+                            "Judica: ${entry['answer']}",
                             style: const TextStyle(color: Colors.black),
                           ),
                           tileColor: Colors.white.withOpacity(0.8), // Semi-transparent
@@ -176,7 +176,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                       child: TextField(
                         controller: controller,
                         decoration: InputDecoration(
-                          hintText: "Ask a question...",
+                          hintText: AppLocalizations.of(context)!.askaquestion,
                           hintStyle: const TextStyle(color: Colors.black54),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.8),
