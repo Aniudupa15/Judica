@@ -79,5 +79,41 @@
   "servedhalfterm" : "Served Half Term",
   "riskscore"      : "Risk Score",
   "penaltySeverity":"Penalty Severity",
-  "submit"         : "Submit"
-}
+  "submit"         : "Submit",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  "please"         :"Please enter an email address.",
+  "resetpassword"  :"Password reset email sent! Check your inbox.",
+  "error"          :"An error occurred. Please try again.",
+  "enteremail"     :"Enter your email",
+  "repassword"     :"Reset Password →",
+
+  "cannotemail"    :"Email cannot be empty",
+  "cannotpasswort" :"Password cannot be empty",
+  "usernotfound"   :"User role not found.",
+  "pleasewait"     :"Please wait...",
+  "continue"       :"Or continue with",
+  "account"        :"Don't have an account?",
+  "sign"           :"Sign Up",
+  "selectLanguage" :"SelectLanguage"
+   }

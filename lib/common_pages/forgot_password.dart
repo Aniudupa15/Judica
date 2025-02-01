@@ -1,6 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -12,12 +12,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final TextEditingController _emailController = TextEditingController();
   String _statusMessage = '';
 
+
   Future<void> _resetPassword() async {
     String email = _emailController.text.trim();
 
     if (email.isEmpty) {
       setState(() {
-        _statusMessage = 'Please enter an email address.';
+        _statusMessage = AppLocalizations.of(context)!.please;
       });
       return;
     }
@@ -25,11 +26,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     try {
       await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
       setState(() {
-        _statusMessage = 'Password reset email sent! Check your inbox.';
+        _statusMessage =  AppLocalizations.of(context)!.resetpassword;
       });
     } on FirebaseAuthException catch (e) {
       setState(() {
-        _statusMessage = e.message ?? 'An error occurred. Please try again.';
+        _statusMessage = e.message ??  AppLocalizations.of(context)!.error;
       });
     }
   }
@@ -38,7 +39,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Judica"),
+        title: Text(AppLocalizations.of(context)!.please),
         backgroundColor: const Color.fromRGBO(255, 125, 41, 1),
       ),
       body: Container(
@@ -94,8 +95,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     borderRadius: BorderRadius.circular(12), // <-- Radius
                   ),
                 ),
-                child: const Text(
-                  'Reset Password →',
+                child:Text(AppLocalizations.of(context)!.repassword,
                   style: TextStyle(fontSize: 15, color: Colors.white),
                 ),
               ),
