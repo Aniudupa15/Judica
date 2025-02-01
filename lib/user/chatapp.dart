@@ -1,183 +1,159 @@
-import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:judica/auth/firebase_options.dart';
+import 'package:firebase_realtime_chat/firebase_realtime_chat.dart';
 
-class AdvocateListPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Select an Advocate')),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('advocates').snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No advocates available.'));
-          }
-          final advocates = snapshot.data!.docs;
-
-          return ListView.builder(
-            itemCount: advocates.length,
-            itemBuilder: (context, index) {
-              final advocate = advocates[index].data() as Map<String, dynamic>;
-              final advocateId = advocates[index].id;
-              final advocateName = advocate['name'] ?? 'Unknown';
-
-              return ListTile(
-                title: Text(advocateName),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChatPage(
-                        receiverId: advocateId,
-                        receiverName: advocateName,
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-}
-
-class ChatPage extends StatefulWidget {
-  final String receiverId;
-  final String receiverName;
-
-  ChatPage({
-    Key? key,
-    required this.receiverId,
-    required this.receiverName,
-  }) : super(key: key);
+class OpenChatRoomView extends StatefulWidget {
+  const OpenChatRoomView({super.key});
 
   @override
-  _ChatPageState createState() => _ChatPageState();
+  State<OpenChatRoomView> createState() => _OpenChatRoomViewState();
 }
 
-class _ChatPageState extends State<ChatPage> {
-  final TextEditingController _messageController = TextEditingController();
-  final User? _currentUser = FirebaseAuth.instance.currentUser;
-  late String chatId;
+class _OpenChatRoomViewState extends State<OpenChatRoomView> {
+  User? currentUser;
+  Future<List<UserModel>>? advocatesListFuture;
 
   @override
   void initState() {
     super.initState();
-    chatId = _generateChatId(_currentUser!.uid, widget.receiverId);
+    _loadAdvocates();
   }
 
-  String _generateChatId(String userId, String receiverId) {
-    return userId.hashCode <= receiverId.hashCode
-        ? '${userId}_$receiverId'
-        : '${receiverId}_$userId';
-  }
+  // Fetch the list of advocates from Firestore
+  Future<void> _loadAdvocates() async {
+    currentUser = FirebaseAuth.instance.currentUser;
 
-  Future<void> _sendMessage(String content) async {
-    if (content.trim().isEmpty) return;
-
-    try {
-      await FirebaseFirestore.instance.collection('chats').doc(chatId).collection('messages').add({
-        'sender': _currentUser!.uid,
-        'content': content,
-        'timestamp': FieldValue.serverTimestamp(),
+    if (currentUser != null) {
+      advocatesListFuture = FirebaseFirestore.instance
+          .collection('users')
+          .where('role', isEqualTo: 'Judge') // Fetch only users with role 'Judge'
+          .get()
+          .then((querySnapshot) {
+        return querySnapshot.docs.map((doc) {
+          var userData = doc.data() as Map<String, dynamic>;
+          return UserModel(
+            userId: doc.id,
+            email: userData['email'] ?? '',
+            name: userData['username'] ?? 'Unknown',
+            profile: userData['profile'] ?? '',
+          );
+        }).toList();
       });
-      _messageController.clear();
-    } catch (e) {
-      print('Error sending message: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send message.')),
-      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.receiverName),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('chats')
-                  .doc(chatId)
-                  .collection('messages')
-                  .orderBy('timestamp', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text('No messages yet.'),
-                  );
-                }
-                final messages = snapshot.data!.docs.toList();
+    return FutureBuilder<List<UserModel>>(
+      future: advocatesListFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-                return ListView.builder(
-                  reverse: true,
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final messageDoc = messages[index];
-                    final message = messageDoc.data() as Map<String, dynamic>;
-                    final senderId = message['sender'] ?? 'Unknown';
-                    final isCurrentUser = senderId == _currentUser?.uid;
-                    final content = message['content'] ?? '';
+        if (snapshot.hasError) {
+          return Scaffold(
+            body: Center(child: Text('Error: ${snapshot.error}')),
+          );
+        }
 
-                    return Align(
-                      alignment: isCurrentUser
-                          ? Alignment.centerRight
-                          : Alignment.centerLeft,
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(
-                            vertical: 4, horizontal: 8),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isCurrentUser ? Colors.blue : Colors.grey,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          content,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
+        if (snapshot.hasData && snapshot.data != null) {
+          var advocates = snapshot.data!;
+
+          return Scaffold(
+
+            body: Stack(
               children: [
-                Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: const InputDecoration(
-                      hintText: 'Write a message...',
-                      border: InputBorder.none,
+                Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage("assets/ChatBotBackground.jpg"),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.send),
-                  onPressed: () => _sendMessage(_messageController.text),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ListView.builder(
+                    itemCount: advocates.length,
+                    itemBuilder: (context, index) {
+                      var advocate = advocates[index];
+
+                      return Card(
+                        margin: EdgeInsets.symmetric(vertical: 8),
+                        elevation: 5,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          leading: CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(
+                              advocate.profile.isNotEmpty
+                                  ? advocate.profile
+                                  : 'https://th.bing.com/th/id/OIP.eL0lZacXCPliDOObUuM8nwAAAA?w=271&h=267&rs=1&pid=ImgDetMain', // Default image
+                            ),
+                          ),
+                          title: Text(
+                            advocate.name,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+
+                          trailing: Icon(
+                            Icons.chat_bubble_outline,
+                            color: Colors.deepPurple,
+                          ),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) {
+                                  return ChatRoomView(
+                                    ownerBubbleColor: Color.fromARGB(
+                                        255, 42, 217, 202),
+                                    otherBubbleColor: Color.fromARGB(
+                                        255, 255, 195, 0),
+                                    defaultImage: "https://th.bing.com/th/id/OIP.eL0lZacXCPliDOObUuM8nwAAAA?w=271&h=267&rs=1&pid=ImgDetMain",
+                                    appBar: AppBar(
+                                      backgroundColor: const Color.fromRGBO(255, 165, 89, 1),
+                                    ),
+                                    imageDownloadButton: true,
+                                    senderMember: UserModel(
+                                      userId: currentUser!.email!,
+                                      email: currentUser!.email!,
+                                      name: 'You',
+                                      profile: '', // Use current user's profile if needed
+                                    ),
+                                    receiverMember: advocate, // The selected advocate
+                                  );
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ],
             ),
-          ),
-        ],
-      ),
+          );
+        }
+
+        return Scaffold(
+          body: Center(child: Text('No advocates found')),
+        );
+      },
     );
   }
 }

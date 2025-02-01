@@ -6,7 +6,7 @@ import 'package:judica/police/chat_bot_police.dart';
 import 'package:judica/police/engagement.dart';
 import 'package:judica/police/police_complaint_dashboard.dart';
 import 'fir_page.dart'; // Import your FIR page
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class PoliceHome extends StatefulWidget {
   const PoliceHome({super.key});
 
@@ -22,9 +22,10 @@ class _PoliceHomeState extends State<PoliceHome> {
   static final List<Widget> _pages = <Widget>[
     FirComponent(), // FIR-related component
     const ChatScreenPolice(), // ChatBot Page
-    const ProfilePage(),
     ComplaintManagementDashboard(),
-    PoliceEngagementScreen()// Profile Page
+    PoliceEngagementScreen(),
+    const ProfilePage(),
+// Profile Page
   ];
 
   // Function to handle tab selection
@@ -73,7 +74,7 @@ class _PoliceHomeState extends State<PoliceHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Judica"),
+        title:  Text(AppLocalizations.of(context)!.judica),
         backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Lighter orange
         automaticallyImplyLeading: false, // Removes the back button
       ),
@@ -91,26 +92,26 @@ class _PoliceHomeState extends State<PoliceHome> {
             canvasColor: const Color.fromRGBO(255, 165, 89, 1), // Set background color here
           ),
           child: BottomNavigationBar(
-            items: const <BottomNavigationBarItem>[
+            items:  <BottomNavigationBarItem>[
               BottomNavigationBarItem(
                 icon: Icon(Icons.assignment), // Updated icon for FIR
                 label: 'FIR',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.chat),
-                label: 'ChatBot',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: 'Profile',
+                label: AppLocalizations.of(context)!.chatbot,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.dashboard),
-                label: 'Main',
+                label: AppLocalizations.of(context)!.main,
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.remove_from_queue_sharp),
-                label: 'Create',
+                label: AppLocalizations.of(context)!.create,
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.person),
+                label: AppLocalizations.of(context)!.profile,
               ),
             ],
             currentIndex: _selectedIndex, // Highlight the selected tab

@@ -64,7 +64,7 @@ class _FirComponentState extends State<FirComponent> with SingleTickerProviderSt
 
     try {
       final response = await http.post(
-        Uri.parse('https://fir-generator.onrender.com/'),
+        Uri.parse('wss://aniudupa-fir-gen.hf.space/generate-fir/'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(firDetails),
       );

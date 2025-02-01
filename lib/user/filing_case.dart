@@ -123,86 +123,117 @@ class _ComplaintFormState extends State<ComplaintForm> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("File a Complaint"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: "Incident Description",
-                  border: OutlineInputBorder(),
+      body: Stack(
+        children:[Container(
+          decoration: const BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage("assets/ChatBotBackground.jpg"),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ), Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(height: 80,),
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: "Incident Description",
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 4,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return "Please provide a description of the incident.";
+                    }
+                    return null;
+                  },
+                  onSaved: (value) {
+                    _incidentDescription = value!;
+                  },
                 ),
-                maxLines: 4,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return "Please provide a description of the incident.";
-                  }
-                  return null;
-                },
-                onSaved: (value) {
-                  _incidentDescription = value!;
-                },
-              ),
-              SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                value: _priority,
-                decoration: InputDecoration(
-                  labelText: "Priority",
-                  border: OutlineInputBorder(),
-                ),
-                items: ["Low", "Medium", "High"]
-                    .map((priority) => DropdownMenuItem(
-                  value: priority,
-                  child: Text(priority),
-                ))
-                    .toList(),
-                onChanged: (value) {
-                  setState(() {
+                SizedBox(height: 40),
+                DropdownButtonFormField<String>(
+                  value: _priority,
+                  decoration: InputDecoration(
+                    labelText: "Priority",
+                    border: OutlineInputBorder(),
+                  ),
+                  items: ["Low", "Medium", "High"]
+                      .map((priority) => DropdownMenuItem(
+                    value: priority,
+                    child: Text(priority),
+                  ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _priority = value!;
+                    });
+                  },
+                  onSaved: (value) {
                     _priority = value!;
-                  });
-                },
-                onSaved: (value) {
-                  _priority = value!;
-                },
-              ),
-              SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _getCurrentLocation,
-                icon: Icon(Icons.location_on),
-                label: Text("Use Current Location"),
-              ),
-              if (_currentPosition != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    "Location: Lat: ${_currentPosition!.latitude}, Lng: ${_currentPosition!.longitude}",
-                    style: TextStyle(color: Colors.green),
+                  },
+                ),
+                SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _getCurrentLocation,
+                  icon: Icon(Icons.location_on),
+                  label: Text("Use Current Location"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
-              ElevatedButton.icon(
-                onPressed: _pickFile,
-                icon: Icon(Icons.attach_file),
-                label: Text("Attach Media/Document"),
-              ),
-              if (_selectedFile != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text("File selected: ${_selectedFile!.path.split('/').last}"),
+                if (_currentPosition != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text(
+                      "Location: Lat: ${_currentPosition!.latitude}, Lng: ${_currentPosition!.longitude}",
+                      style: TextStyle(color: Colors.green),
+                    ),
+                  ),SizedBox(height: 20,),
+                ElevatedButton.icon(
+                  onPressed: _pickFile,
+                  icon: Icon(Icons.attach_file),
+                  label: Text("Attach Media/Document"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
-              Spacer(),
-              ElevatedButton(
-                onPressed: _submitComplaint,
-                child: Text("Submit Complaint"),
-              ),
-            ],
+                if (_selectedFile != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Text("File selected: ${_selectedFile!.path.split('/').last}"),
+                  ),
+                Spacer(),
+                ElevatedButton(
+                  onPressed: _submitComplaint,
+                  child: Text("Submit Complaint"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ),]
       ),
     );
   }

@@ -90,7 +90,7 @@
   "cannotpasswort" :"Password cannot be empty",
   "usernotfound"   :"User role not found.",
   "pleasewait"     :"Please wait...",
-  "continue"       :"Or continue with",
+  "continu"       :"Or continue with",
   "account"        :"Don't have an account?",
   "sign"           :"Sign Up",
   "selectLanguage" :"SelectLanguage",
@@ -109,5 +109,145 @@
   "users"          : "users",
   "role"           : "role",
   "judica"         :"Judica",
-"selectrole"       :"Select Role"
+"selectrole"       :"Select Role",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"fir": "FIR",
+  "main": "Main",
+  "create": "Create",
+
 }

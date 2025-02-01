@@ -23,8 +23,8 @@ class _UserHomeState extends State<UserHome> {
   static final List<Widget> _pages = <Widget>[
     const ChatScreenUser(),
      ComplaintForm(),// ChatBot Page
-    const ProfilePage(),
-    SpeechDemo()
+    OpenChatRoomView(),
+    ProfilePage(),
   ];
 
   // Function to handle tab selection
@@ -75,40 +75,47 @@ class _UserHomeState extends State<UserHome> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Judica"),
-        backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Lighter orange
+        backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // AppBar color
         automaticallyImplyLeading: false,
         actions: [
-          IconButton(onPressed: (){
-            showDialog(context: context, builder: (context)=>GovernmentInfo(),);
-          }, icon: Icon(Icons.notifications))
-        ],// Removes the back button
+          IconButton(
+            onPressed: () {
+              showDialog(context: context, builder: (context) => GovernmentInfo());
+            },
+            icon: Icon(Icons.notifications),
+          )
+        ], // Removes the back button
       ),
       body: _pages[_selectedIndex], // Display the selected page
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'ChatBot',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.file_copy_outlined),
-            label: 'Filing',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.file_copy_outlined),
-            label: 'Chat',
-          ),
-        ],
-        currentIndex: _selectedIndex, // Highlight the selected tab
-        selectedItemColor: Colors.white, // Selected icon color
-        unselectedItemColor: Colors.black54, // Unselected icon color
-        backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Lighter orange
-        onTap: _onItemTapped, // Handle tab selection
+      bottomNavigationBar: Container(
+        color: Color(0xFFFFA559),  // Set the color here
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_box_rounded),
+              label: 'ChatBot',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.file_present),
+              label: 'Complaint',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
+            ),
+          ],
+          currentIndex: _selectedIndex, // Highlight the selected tab
+          selectedItemColor: Colors.black, // Selected icon color
+          unselectedItemColor: Colors.black54, // Unselected icon color
+          onTap: _onItemTapped, // Handle tab selection
+        ),
       ),
+      backgroundColor: Colors.white,  // Ensure the background of the Scaffold is white
     );
+
   }
 }

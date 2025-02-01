@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences // Import share package
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+import 'package:flutter_tts/flutter_tts.dart'; // Import FlutterTts
+
 import '../common_pages/lawgpt_service.dart';
-import 'dart:convert'; // For encoding/decoding chat history to/from JSON
 
 class ChatScreenPolice extends StatefulWidget {
   const ChatScreenPolice({super.key});
@@ -14,16 +18,37 @@ class ChatScreenPolice extends StatefulWidget {
 class _ChatScreenPoliceState extends State<ChatScreenPolice> {
   final LawGPTService service = LawGPTService();
   final TextEditingController controller = TextEditingController();
-  bool isLoading = false; // Indicate loading state
-  List<Map<String, String>> chatHistory = []; // Store as question-answer pairs
+  bool isLoading = false;
+  List<Map<String, String>> chatHistory = [];
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  bool _isListening = false;
+  String _text = "Tap the microphone to start";
+  String _selectedLanguage = 'en-IN'; // Default language
+  final FlutterTts flutterTts = FlutterTts(); // Initialize FlutterTts
+
+  // List of Indian languages with their locale codes
+  final Map<String, String> indianLanguages = {
+    'English (India)': 'en-IN',
+    'Hindi (India)': 'hi-IN',
+    'Bengali (India)': 'bn-IN',
+    'Telugu (India)': 'te-IN',
+    'Marathi (India)': 'mr-IN',
+    'Tamil (India)': 'ta-IN',
+    'Urdu (India)': 'ur-IN',
+    'Gujarati (India)': 'gu-IN',
+    'Kannada (India)': 'kn-IN',
+    'Malayalam (India)': 'ml-IN',
+    'Punjabi (India)': 'pa-IN',
+  };
 
   @override
   void initState() {
     super.initState();
-    _loadChatHistory(); // Load chat history when the screen is initialized
+    _loadChatHistory();
+    _initSpeech();
+    _initTts(); // Initialize TTS
   }
 
-  // Load the chat history from SharedPreferences
   Future<void> _loadChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String? savedHistory = prefs.getString('chat_history');
@@ -37,16 +62,14 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
     }
   }
 
-  // Save the chat history to SharedPreferences
   Future<void> _saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedHistory = json.encode(chatHistory);
     prefs.setString('chat_history', encodedHistory);
   }
 
-  // Ask a question and get an answer
   void askQuestion() async {
-    if (controller.text.trim().isEmpty) return; // Prevent empty questions
+    if (controller.text.trim().isEmpty) return;
 
     setState(() {
       isLoading = true;
@@ -63,9 +86,8 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
         chatHistory.add({"question": question, "answer": answer});
       });
       controller.clear();
-
-      // Save updated chat history
       await _saveChatHistory();
+      _speak(answer); // Speak the answer
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -77,21 +99,91 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
     }
   }
 
-  // Delete a chat entry
   void deleteMessage(int index) async {
     setState(() {
       chatHistory.removeAt(index);
     });
-
-    // Save updated chat history after deletion
     await _saveChatHistory();
   }
 
-  // Share a chat message
   void shareMessage(int index) {
     final entry = chatHistory[index];
     final message = "You: ${entry['question']}\nLawGPT: ${entry['answer']}";
-    Share.share(message); // Now properly importing and using share functionality
+    Share.share(message);
+  }
+
+  void _initSpeech() async {
+    bool available = await _speech.initialize();
+    if (!available) {
+      setState(() {
+        _text = "Speech recognition is not available.";
+      });
+    }
+  }
+
+  void _startListening() async {
+    if (!_isListening) {
+      await _speech.listen(
+        onResult: (result) {
+          setState(() {
+            controller.text = result.recognizedWords;
+          });
+        },
+        localeId: _selectedLanguage, // Set the selected language
+      );
+      setState(() {
+        _isListening = true;
+      });
+    }
+  }
+
+  void _stopListening() async {
+    await _speech.stop();
+    setState(() {
+      _isListening = false;
+    });
+  }
+
+  // Initialize TTS
+  void _initTts() async {
+    await flutterTts.setLanguage(_selectedLanguage); // Set the initial language
+    await flutterTts.setSpeechRate(0.5); // Adjust speech rate if needed
+    await flutterTts.setVolume(1.0); // Set volume
+    await flutterTts.setPitch(1.0); // Set pitch
+  }
+
+  // Speak the text
+  Future<void> _speak(String text) async {
+    await flutterTts.setLanguage(_selectedLanguage); // Set language before speaking
+    await flutterTts.speak(text);
+  }
+
+  // Method to get font style based on selected language
+  TextStyle getFontStyleForLanguage(String languageCode) {
+    switch (languageCode) {
+      case 'hi-IN': // Hindi
+        return GoogleFonts.notoSansDevanagari();
+      case 'bn-IN': // Bengali
+        return GoogleFonts.notoSansBengali();
+      case 'te-IN': // Telugu
+        return GoogleFonts.notoSansTelugu();
+      case 'mr-IN': // Marathi
+        return GoogleFonts.notoSansDevanagari();
+      case 'ta-IN': // Tamil
+        return GoogleFonts.notoSansTamil();
+      case 'ur-IN': // Urdu
+        return GoogleFonts.notoNastaliqUrdu();
+      case 'gu-IN': // Gujarati
+        return GoogleFonts.notoSansGujarati();
+      case 'kn-IN': // Kannada
+        return GoogleFonts.notoSansKannada();
+      case 'ml-IN': // Malayalam
+        return GoogleFonts.notoSansMalayalam();
+      case 'pa-IN': // Punjabi
+        return GoogleFonts.notoSansGurmukhi();
+      default: // English and others
+        return GoogleFonts.roboto();
+    }
   }
 
   @override
@@ -99,19 +191,35 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage("assets/ChatBotBackground.jpg"), // Replace with your image path
+                image: AssetImage("assets/ChatBotBackground.jpg"),
                 fit: BoxFit.cover,
               ),
             ),
           ),
-          // Chat content
           Column(
             children: [
-              // Chat history display
+              // Language selection dropdown
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: DropdownButton<String>(
+                  value: _selectedLanguage,
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedLanguage = newValue!;
+                    });
+                    _initTts(); // Reinitialize TTS with the new language
+                  },
+                  items: indianLanguages.entries.map((entry) {
+                    return DropdownMenuItem<String>(
+                      value: entry.value,
+                      child: Text(entry.key),
+                    );
+                  }).toList(),
+                ),
+              ),
               Expanded(
                 child: ListView.builder(
                   itemCount: chatHistory.length,
@@ -123,18 +231,20 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                         ListTile(
                           title: Text(
                             "You: ${entry['question']}",
-                            style: TextStyle(
+                            style: getFontStyleForLanguage(_selectedLanguage).copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
                           ),
-                          tileColor: Colors.grey[300]?.withOpacity(0.8), // Semi-transparent
+                          tileColor: Colors.grey[300]?.withOpacity(0.8),
                           trailing: PopupMenuButton<String>(
                             onSelected: (value) {
                               if (value == 'delete') {
                                 deleteMessage(index);
                               } else if (value == 'share') {
                                 shareMessage(index);
+                              } else if (value == 'speak') {
+                                _speak(entry['answer']!); // Speak the answer
                               }
                             },
                             itemBuilder: (BuildContext context) => [
@@ -146,28 +256,38 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                                 value: 'share',
                                 child: Text('Share'),
                               ),
+                              const PopupMenuItem<String>(
+                                value: 'speak',
+                                child: Text('Speak'),
+                              ),
                             ],
                           ),
                         ),
                         ListTile(
                           title: Text(
                             "LawGPT: ${entry['answer']}",
-                            style: const TextStyle(color: Colors.black),
+                            style: getFontStyleForLanguage(_selectedLanguage).copyWith(
+                              color: Colors.black,
+                            ),
                           ),
-                          tileColor: Colors.white.withOpacity(0.8), // Semi-transparent
+                          tileColor: Colors.white.withOpacity(0.8),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.volume_up),
+                            onPressed: () {
+                              _speak(entry['answer']!); // Speak the answer
+                            },
+                          ),
                         ),
                       ],
                     );
                   },
                 ),
               ),
-              // Loading indicator
               if (isLoading)
                 const Padding(
                   padding: EdgeInsets.all(8.0),
                   child: CircularProgressIndicator(),
                 ),
-              // Input field
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Row(
@@ -177,28 +297,31 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> {
                         controller: controller,
                         decoration: InputDecoration(
                           hintText: "Ask a question...",
-                          hintStyle: const TextStyle(color: Colors.black54),
                           filled: true,
                           fillColor: Colors.white.withOpacity(0.8),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onSubmitted: (value) {
-                          askQuestion();
-                        },
+                        style: getFontStyleForLanguage(_selectedLanguage),
                       ),
                     ),
-                    const SizedBox(width: 8),
                     IconButton(
-                      icon: const Icon(Icons.send),
-                      color: Theme.of(context).primaryColor,
-                      onPressed: askQuestion,
+                      icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+                      color: Colors.red,
+                      onPressed: () {
+                        _isListening ? _stopListening() : _startListening();
+                      },
                     ),
+                    if (controller.text.trim().isNotEmpty)
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        color: Theme.of(context).primaryColor,
+                        onPressed: askQuestion,
+                      ),
                   ],
                 ),
               ),
-
             ],
           ),
         ],

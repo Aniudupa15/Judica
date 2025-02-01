@@ -262,7 +262,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildSocialLogin() {
     return Column(
       children: [
-        Text(AppLocalizations.of(context)!.continue,
+        Text("Continue",
           style: TextStyle(color: Colors.black),
         ),
         const SizedBox(height: 10),
