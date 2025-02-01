@@ -17,7 +17,7 @@
   "police"         : "Police",
   "advocate"       : "Advocate",
   "register"       : "Register",
-  "haveanaccount"  : "Have an account ? Login",
+  "haveanaccount"  : "Have an account",
   "forgotpassword" : "Forgot Password",
   "login"          : "Login",
   "orcontinuewith" : "Or continue with",
@@ -27,7 +27,7 @@
   "profile"        : "Profile",
   "name"           : "Name",
   "mobilenumber"   : "Mobile Number",
-  "dateofbirth"    : "Date of birth",
+  "dateOfBirth"    : "Date of Birth",
   "notavailable"   : "Not Available",
   "address"        : "Address",
   "logout"         : "Logout",
@@ -80,28 +80,6 @@
   "riskscore"      : "Risk Score",
   "penaltySeverity":"Penalty Severity",
   "submit"         : "Submit",
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   "please"         :"Please enter an email address.",
   "resetpassword"  :"Password reset email sent! Check your inbox.",
   "error"          :"An error occurred. Please try again.",
@@ -115,5 +93,21 @@
   "continue"       :"Or continue with",
   "account"        :"Don't have an account?",
   "sign"           :"Sign Up",
-  "selectLanguage" :"SelectLanguage"
-   }
+  "selectLanguage" :"SelectLanguage",
+  "changessaved"   : "Changes saved successfully!",
+  "edittitle"      : "Edit $title",
+  "enternewtitle"  : "Enter new $title",
+  "passworddont"  :"Passwords don't match!",
+  "regsuccess"     :"Registration successful!",
+  "weakPassword"   :"weak-password",
+  "passwordtooweak":"The password provided is too weak.",
+  "emailalreadyinuse": "email-already-in-use",
+  "alreadyexist"   : "The account already exists for that email.",
+  "invalidemail"   :"invalid-email",
+  "notvalid"       :"The email provided is not valid.",
+  "error"          :"An error occurred. Please try again.",
+  "users"          : "users",
+  "role"           : "role",
+  "judica"         :"Judica",
+"selectrole"       :"Select Role"
+}

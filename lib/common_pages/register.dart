@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:judica/common_pages/login.dart';
-
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -32,7 +32,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void register() async {
     if (passwordController.text != confirmPasswordController.text) {
-      displayMessageToUser("Passwords don't match!");
+      displayMessageToUser(AppLocalizations.of(context)!.passworddont);
       return;
     }
 
@@ -51,26 +51,26 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (context.mounted) {
         Navigator.pop(context);
-        displayMessageToUser('Registration successful!');
+        displayMessageToUser(AppLocalizations.of(context)!.regsuccess);
       }
     } on FirebaseAuthException catch (e) {
       String message;
       switch (e.code) {
         case 'weak-password':
-          message = 'The password provided is too weak.';
+          message = AppLocalizations.of(context)!.passwordtooweak;
           break;
         case 'email-already-in-use':
-          message = 'The account already exists for that email.';
+          message = AppLocalizations.of(context)!.alreadyexist;
           break;
         case 'invalid-email':
-          message = 'The email provided is not valid.';
+          message = AppLocalizations.of(context)!.notvalid;
           break;
         default:
-          message = 'An error occurred. Please try again.';
+          message = AppLocalizations.of(context)!.error;
       }
       displayMessageToUser(message);
     } catch (e) {
-      displayMessageToUser('An error occurred. Please try again.');
+      displayMessageToUser(AppLocalizations.of(context)!.error);
     } finally {
       setState(() {
         isLoading = false;
@@ -104,7 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Judica"),
+        title: Text(AppLocalizations.of(context)!.judica),
         backgroundColor: const Color.fromRGBO(255, 165, 89, 1),
       ),
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -137,18 +137,18 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _buildTextField(usernameController, 'Username', Icons.person_2_outlined),
+                  _buildTextField(usernameController, AppLocalizations.of(context)!.username, Icons.person_2_outlined),
                   const SizedBox(height: 20),
                   _buildTextField(
                     emailController,
-                    'Email',
+                    AppLocalizations.of(context)!.email,
                     Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                   ),
                   const SizedBox(height: 20),
                   _buildTextField(
                     passwordController,
-                    'Password',
+                    AppLocalizations.of(context)!.password,
                     Icons.lock_outline,
                     obscureText: !isPasswordVisible,
                     toggleVisibility: () {
@@ -160,7 +160,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 20),
                   _buildTextField(
                     confirmPasswordController,
-                    'Confirm Password',
+                    AppLocalizations.of(context)!.confirmpassword,
                     Icons.lock_outline,
                     obscureText: !isConfirmPasswordVisible,
                     toggleVisibility: () {
@@ -177,9 +177,9 @@ class _RegisterPageState extends State<RegisterPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        "Have an account? ",
-                        style: TextStyle(color: Colors.black),
+                      Text(
+                      AppLocalizations.of(context)!.haveanaccount,
+                        style: const TextStyle(color: Colors.black),
                       ),
                       GestureDetector(
                         onTap: () {
@@ -188,9 +188,9 @@ class _RegisterPageState extends State<RegisterPage> {
                             MaterialPageRoute(builder: (context) => LoginPage()),
                           );
                         },
-                        child: const Text(
-                          "Login",
-                          style: TextStyle(color: Colors.blue),
+                        child: Text(
+                          AppLocalizations.of(context)!.login,
+                          style:const  TextStyle(color: Colors.blue),
                         ),
                       ),
                     ],
@@ -246,7 +246,7 @@ class _RegisterPageState extends State<RegisterPage> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: DropdownButtonFormField<String>(
         value: selectedRole,
-        hint: const Text("Select Role"),
+        hint: Text(AppLocalizations.of(context)!.selectrole),
         onChanged: (String? value) {
           setState(() {
             selectedRole = value!;
@@ -261,7 +261,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ),
         ),
-        items: ['Citizen', 'Police', 'Judge']
+        items: [AppLocalizations.of(context)!.citizen, AppLocalizations.of(context)!.police, AppLocalizations.of(context)!.advocate]
             .map((role) => DropdownMenuItem(value: role, child: Text(role)))
             .toList(),
       ),
@@ -282,7 +282,7 @@ class _RegisterPageState extends State<RegisterPage> {
         ),
         child: isLoading
             ? const CircularProgressIndicator(color: Colors.white)
-            : const Text('Register'),
+            : Text(AppLocalizations.of(context)!.register),
       ),
     );
   }
