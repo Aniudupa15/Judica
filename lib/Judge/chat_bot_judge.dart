@@ -3,30 +3,30 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'package:flutter_tts/flutter_tts.dart'; // Import FlutterTts
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 
 import '../common_pages/lawgpt_service.dart';
 
-class ChatScreenJudge extends StatefulWidget {
-  const ChatScreenJudge({super.key});
+class ChatScreenjudge extends StatefulWidget {
+  const ChatScreenjudge({super.key});
 
   @override
-  _ChatScreenJudgeState createState() => _ChatScreenJudgeState();
+  _ChatScreenjudgeState createState() => _ChatScreenjudgeState();
 }
 
-class _ChatScreenJudgeState extends State<ChatScreenJudge> {
+class _ChatScreenjudgeState extends State<ChatScreenjudge> {
   final LawGPTService service = LawGPTService();
   final TextEditingController controller = TextEditingController();
   bool isLoading = false;
   List<Map<String, String>> chatHistory = [];
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
+  bool isSpeaking = false;
   String _text = "Tap the microphone to start";
-  String _selectedLanguage = 'en-IN'; // Default language
-  final FlutterTts flutterTts = FlutterTts(); // Initialize FlutterTts
+  String _selectedLanguage = 'en-IN';
+  final FlutterTts flutterTts = FlutterTts();
 
-  // List of Indian languages with their locale codes
   final Map<String, String> indianLanguages = {
     'English (India)': 'en-IN',
     'Hindi (India)': 'hi-IN',
@@ -46,7 +46,35 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
     super.initState();
     _loadChatHistory();
     _initSpeech();
-    _initTts(); // Initialize TTS
+    _initTts();
+    _setupTtsListeners();
+  }
+
+  @override
+  void dispose() {
+    flutterTts.stop();
+    controller.dispose();
+    super.dispose();
+  }
+
+  void _setupTtsListeners() {
+    flutterTts.setStartHandler(() {
+      setState(() {
+        isSpeaking = true;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        isSpeaking = false;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        isSpeaking = false;
+      });
+    });
   }
 
   Future<void> _loadChatHistory() async {
@@ -65,7 +93,7 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
   Future<void> _saveChatHistory() async {
     final prefs = await SharedPreferences.getInstance();
     final String encodedHistory = json.encode(chatHistory);
-    prefs.setString('chat_history', encodedHistory);
+    await prefs.setString('chat_history', encodedHistory);
   }
 
   void askQuestion() async {
@@ -79,7 +107,7 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
       final question = controller.text;
       final answer = await service.askQuestion(
         question,
-        chatHistory.map((entry) => entry["question"]!).toList(),
+        chatHistory.map((entry) => entry["question"] ?? '').toList(),
       );
 
       setState(() {
@@ -87,11 +115,9 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
       });
       controller.clear();
       await _saveChatHistory();
-      _speak(answer); // Speak the answer
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+          SnackBar(content: Text("Error: $e")));
     } finally {
       setState(() {
         isLoading = false;
@@ -108,80 +134,114 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
 
   void shareMessage(int index) {
     final entry = chatHistory[index];
-    final message = "You: ${entry['question']}\nLawGPT: ${entry['answer']}";
+    final message = "You: ${entry['question'] ?? 'No Question'}\nLawGPT: ${entry['answer'] ?? 'No Answer'}";
     Share.share(message);
   }
 
   void _initSpeech() async {
-    bool available = await _speech.initialize();
-    if (!available) {
+    try {
+      bool available = await _speech.initialize();
+      if (!available) {
+        setState(() {
+          _text = "Speech recognition is not available.";
+        });
+      }
+    } catch (e) {
       setState(() {
-        _text = "Speech recognition is not available.";
+        _text = "Failed to initialize speech recognition: $e";
       });
     }
   }
 
-  void _startListening() async {
+  void _toggleListening() async {
     if (!_isListening) {
-      await _speech.listen(
+      bool available = await _speech.listen(
         onResult: (result) {
           setState(() {
             controller.text = result.recognizedWords;
           });
         },
-        localeId: _selectedLanguage, // Set the selected language
+        localeId: _selectedLanguage,
       );
+
+      if (available) {
+        setState(() {
+          _isListening = true;
+          _text = "Listening...";
+        });
+      } else {
+        setState(() {
+          _text = "Speech recognition not available";
+        });
+      }
+    } else {
+      await _speech.stop();
       setState(() {
-        _isListening = true;
+        _isListening = false;
+        _text = "Tap the microphone to start";
       });
     }
   }
 
-  void _stopListening() async {
-    await _speech.stop();
+  void _initTts() async {
+    try {
+      await flutterTts.setLanguage(_selectedLanguage);
+      await flutterTts.setSpeechRate(0.5);
+      await flutterTts.setVolume(1.0);
+      await flutterTts.setPitch(1.0);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to initialize TTS: $e")));
+    }
+  }
+
+  Future<void> _speak(String text) async {
+    if (text.isEmpty) return;
+
+    if (isSpeaking) {
+      await _stopSpeaking();
+      return;
+    }
+
+    try {
+      await flutterTts.setLanguage(_selectedLanguage);
+      await flutterTts.speak(text);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to speak: $e")));
+    }
+  }
+
+  Future<void> _stopSpeaking() async {
+    await flutterTts.stop();
     setState(() {
-      _isListening = false;
+      isSpeaking = false;
     });
   }
 
-  // Initialize TTS
-  void _initTts() async {
-    await flutterTts.setLanguage(_selectedLanguage); // Set the initial language
-    await flutterTts.setSpeechRate(0.5); // Adjust speech rate if needed
-    await flutterTts.setVolume(1.0); // Set volume
-    await flutterTts.setPitch(1.0); // Set pitch
-  }
-
-  // Speak the text
-  Future<void> _speak(String text) async {
-    await flutterTts.setLanguage(_selectedLanguage); // Set language before speaking
-    await flutterTts.speak(text);
-  }
-
-  // Method to get font style based on selected language
   TextStyle getFontStyleForLanguage(String languageCode) {
     switch (languageCode) {
-      case 'hi-IN': // Hindi
+      case 'hi-IN':
         return GoogleFonts.notoSansDevanagari();
-      case 'bn-IN': // Bengali
+      case 'bn-IN':
         return GoogleFonts.notoSansBengali();
-      case 'te-IN': // Telugu
+      case 'te-IN':
         return GoogleFonts.notoSansTelugu();
-      case 'mr-IN': // Marathi
+      case 'mr-IN':
         return GoogleFonts.notoSansDevanagari();
-      case 'ta-IN': // Tamil
+      case 'ta-IN':
         return GoogleFonts.notoSansTamil();
-      case 'ur-IN': // Urdu
+      case 'ur-IN':
         return GoogleFonts.notoNastaliqUrdu();
-      case 'gu-IN': // Gujarati
+      case 'gu-IN':
         return GoogleFonts.notoSansGujarati();
-      case 'kn-IN': // Kannada
+      case 'kn-IN':
         return GoogleFonts.notoSansKannada();
-      case 'ml-IN': // Malayalam
+      case 'ml-IN':
         return GoogleFonts.notoSansMalayalam();
-      case 'pa-IN': // Punjabi
+      case 'pa-IN':
         return GoogleFonts.notoSansGurmukhi();
-      default: // English and others
+      default:
         return GoogleFonts.roboto();
     }
   }
@@ -201,16 +261,17 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
           ),
           Column(
             children: [
-              // Language selection dropdown
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: DropdownButton<String>(
                   value: _selectedLanguage,
                   onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedLanguage = newValue!;
-                    });
-                    _initTts(); // Reinitialize TTS with the new language
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedLanguage = newValue;
+                      });
+                      _initTts();
+                    }
                   },
                   items: indianLanguages.entries.map((entry) {
                     return DropdownMenuItem<String>(
@@ -230,7 +291,7 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
                       children: [
                         ListTile(
                           title: Text(
-                            "You: ${entry['question']}",
+                            "You: ${entry['question'] ?? 'No Question'}",
                             style: getFontStyleForLanguage(_selectedLanguage).copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
@@ -244,7 +305,7 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
                               } else if (value == 'share') {
                                 shareMessage(index);
                               } else if (value == 'speak') {
-                                _speak(entry['answer']!); // Speak the answer
+                                _speak(entry['answer'] ?? '');
                               }
                             },
                             itemBuilder: (BuildContext context) => [
@@ -265,17 +326,25 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
                         ),
                         ListTile(
                           title: Text(
-                            "LawGPT: ${entry['answer']}",
+                            "LawGPT: ${entry['answer'] ?? 'No Answer'}",
                             style: getFontStyleForLanguage(_selectedLanguage).copyWith(
                               color: Colors.black,
                             ),
                           ),
                           tileColor: Colors.white.withOpacity(0.8),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.volume_up),
-                            onPressed: () {
-                              _speak(entry['answer']!); // Speak the answer
-                            },
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  isSpeaking ? Icons.stop_circle : Icons.volume_up,
+                                  color: isSpeaking ? Colors.red : null,
+                                ),
+                                onPressed: () {
+                                  _speak(entry['answer'] ?? '');
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -304,21 +373,23 @@ class _ChatScreenJudgeState extends State<ChatScreenJudge> {
                           ),
                         ),
                         style: getFontStyleForLanguage(_selectedLanguage),
+                        onChanged: (text) {
+                          setState(() {});
+                        },
                       ),
                     ),
                     IconButton(
                       icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
-                      color: Colors.red,
-                      onPressed: () {
-                        _isListening ? _stopListening() : _startListening();
-                      },
+                      color: _isListening ? Colors.red : Colors.grey,
+                      onPressed: _toggleListening,
                     ),
-                    if (controller.text.trim().isNotEmpty)
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        color: Theme.of(context).primaryColor,
-                        onPressed: askQuestion,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.send),
+                      color: controller.text.isNotEmpty
+                          ? Theme.of(context).primaryColor
+                          : Colors.grey,
+                      onPressed: controller.text.isNotEmpty ? askQuestion : null,
+                    ),
                   ],
                 ),
               ),

@@ -3,8 +3,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
-import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
-import 'package:flutter_tts/flutter_tts.dart'; // Import FlutterTts
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../common_pages/lawgpt_service.dart';
 
@@ -22,11 +23,11 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
   List<Map<String, String>> chatHistory = [];
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
+  bool isSpeaking = false;
   String _text = "Tap the microphone to start";
-  String _selectedLanguage = 'en-IN'; // Default language
-  final FlutterTts flutterTts = FlutterTts(); // Initialize FlutterTts
+  String _selectedLanguage = 'en-IN';
+  final FlutterTts flutterTts = FlutterTts();
 
-  // List of Indian languages with their locale codes
   final Map<String, String> indianLanguages = {
     'English (India)': 'en-IN',
     'Hindi (India)': 'hi-IN',
@@ -45,27 +46,144 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
   void initState() {
     super.initState();
     _loadChatHistory();
-    _initSpeech();
-    _initTts(); // Initialize TTS
+    _initSpeechWithPermissions();
+    _initTts();
+    _setupTtsListeners();
   }
 
-  Future<void> _loadChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? savedHistory = prefs.getString('chat_history');
-    if (savedHistory != null) {
-      final List<dynamic> decodedHistory = json.decode(savedHistory);
+  @override
+  void dispose() {
+    flutterTts.stop();
+    controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initSpeechWithPermissions() async {
+    try {
+      final status = await Permission.microphone.request();
+
+      if (status.isGranted) {
+        bool available = await _speech.initialize(
+          onStatus: (status) {
+            print('Speech recognition status: $status');
+            if (status == 'notListening') {
+              setState(() {
+                _isListening = false;
+                _text = "Tap the microphone to start";
+              });
+            }
+          },
+          onError: (errorNotification) {
+            print('Speech recognition error: $errorNotification');
+            setState(() {
+              _isListening = false;
+              _text = "Error: ${errorNotification.errorMsg}";
+            });
+          },
+        );
+
+        if (!available) {
+          setState(() {
+            _text = "Speech recognition is not available on this device.";
+          });
+        }
+      } else {
+        setState(() {
+          _text = "Microphone permission denied. Please enable it in settings.";
+        });
+        _showPermissionDialog();
+      }
+    } catch (e) {
       setState(() {
-        chatHistory = decodedHistory
-            .map((item) => Map<String, String>.from(item))
-            .toList();
+        _text = "Failed to initialize speech recognition: $e";
       });
     }
   }
 
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Microphone Permission Required'),
+        content: const Text(
+            'The microphone permission is required for speech recognition. '
+                'Please enable it in your device settings to use voice input.'
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          TextButton(
+            child: const Text('Open Settings'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              openAppSettings();
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _setupTtsListeners() {
+    flutterTts.setStartHandler(() {
+      setState(() {
+        isSpeaking = true;
+      });
+    });
+
+    flutterTts.setCompletionHandler(() {
+      setState(() {
+        isSpeaking = false;
+      });
+    });
+
+    flutterTts.setErrorHandler((msg) {
+      setState(() {
+        isSpeaking = false;
+      });
+    });
+
+    flutterTts.setCancelHandler(() {
+      setState(() {
+        isSpeaking = false;
+      });
+    });
+  }
+
+  Future<void> _loadChatHistory() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? savedHistory = prefs.getString('chat_history');
+      if (savedHistory != null) {
+        final List<dynamic> decodedHistory = json.decode(savedHistory);
+        setState(() {
+          chatHistory = decodedHistory
+              .map((item) => Map<String, String>.from(item))
+              .toList();
+        });
+      }
+    } catch (e) {
+      print('Error loading chat history: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load chat history: $e')),
+      );
+    }
+  }
+
   Future<void> _saveChatHistory() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String encodedHistory = json.encode(chatHistory);
-    prefs.setString('chat_history', encodedHistory);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String encodedHistory = json.encode(chatHistory);
+      await prefs.setString('chat_history', encodedHistory);
+    } catch (e) {
+      print('Error saving chat history: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to save chat history: $e')),
+      );
+    }
   }
 
   void askQuestion() async {
@@ -79,7 +197,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
       final question = controller.text;
       final answer = await service.askQuestion(
         question,
-        chatHistory.map((entry) => entry["question"]!).toList(),
+        chatHistory.map((entry) => entry["question"] ?? '').toList(),
       );
 
       setState(() {
@@ -87,7 +205,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
       });
       controller.clear();
       await _saveChatHistory();
-      _speak(answer); // Speak the answer
+      _showAdvocateSuggestions();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
@@ -96,6 +214,103 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  void _toggleListening() async {
+    if (!_isListening) {
+      final status = await Permission.microphone.status;
+      if (!status.isGranted) {
+        _showPermissionDialog();
+        return;
+      }
+
+      try {
+        bool available = await _speech.listen(
+          onResult: (result) {
+            setState(() {
+              controller.text = result.recognizedWords;
+              if (result.finalResult) {
+                _isListening = false;
+              }
+            });
+          },
+          localeId: _selectedLanguage,
+          listenMode: stt.ListenMode.confirmation,
+          cancelOnError: true,
+          partialResults: true,
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 3),
+        );
+
+        if (available) {
+          setState(() {
+            _isListening = true;
+            _text = "Listening...";
+          });
+        } else {
+          setState(() {
+            _text = "Speech recognition failed to start";
+          });
+        }
+      } catch (e) {
+        setState(() {
+          _text = "Error starting speech recognition: $e";
+          _isListening = false;
+        });
+      }
+    } else {
+      try {
+        await _speech.stop();
+        setState(() {
+          _isListening = false;
+          _text = "Tap the microphone to start";
+        });
+      } catch (e) {
+        print("Error stopping speech recognition: $e");
+      }
+    }
+  }
+
+  void _initTts() async {
+    try {
+      await flutterTts.setLanguage(_selectedLanguage);
+      await flutterTts.setSpeechRate(0.5);
+      await flutterTts.setVolume(1.0);
+      await flutterTts.setPitch(1.0);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to initialize TTS: $e")),
+      );
+    }
+  }
+
+  Future<void> _speak(String text) async {
+    if (text.isEmpty) return;
+
+    if (isSpeaking) {
+      await _stopSpeaking();
+      return;
+    }
+
+    try {
+      await flutterTts.setLanguage(_selectedLanguage);
+      await flutterTts.speak(text);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to speak: $e")),
+      );
+    }
+  }
+
+  Future<void> _stopSpeaking() async {
+    try {
+      await flutterTts.stop();
+      setState(() {
+        isSpeaking = false;
+      });
+    } catch (e) {
+      print("Error stopping TTS: $e");
     }
   }
 
@@ -108,83 +323,82 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
 
   void shareMessage(int index) {
     final entry = chatHistory[index];
-    final message = "You: ${entry['question']}\nLawGPT: ${entry['answer']}";
+    final message = "You: ${entry['question'] ?? 'No Question'}\nLawGPT: ${entry['answer'] ?? 'No Answer'}";
     Share.share(message);
   }
 
-  void _initSpeech() async {
-    bool available = await _speech.initialize();
-    if (!available) {
-      setState(() {
-        _text = "Speech recognition is not available.";
-      });
-    }
-  }
-
-  void _startListening() async {
-    if (!_isListening) {
-      await _speech.listen(
-        onResult: (result) {
-          setState(() {
-            controller.text = result.recognizedWords;
-          });
-        },
-        localeId: _selectedLanguage, // Set the selected language
-      );
-      setState(() {
-        _isListening = true;
-      });
-    }
-  }
-
-  void _stopListening() async {
-    await _speech.stop();
-    setState(() {
-      _isListening = false;
-    });
-  }
-
-  // Initialize TTS
-  void _initTts() async {
-    await flutterTts.setLanguage(_selectedLanguage); // Set the initial language
-    await flutterTts.setSpeechRate(0.5); // Adjust speech rate if needed
-    await flutterTts.setVolume(1.0); // Set volume
-    await flutterTts.setPitch(1.0); // Set pitch
-  }
-
-  // Speak the text
-  Future<void> _speak(String text) async {
-    await flutterTts.setLanguage(_selectedLanguage); // Set language before speaking
-    await flutterTts.speak(text);
-  }
-
-  // Method to get font style based on selected language
   TextStyle getFontStyleForLanguage(String languageCode) {
     switch (languageCode) {
-      case 'hi-IN': // Hindi
+      case 'hi-IN':
         return GoogleFonts.notoSansDevanagari();
-      case 'bn-IN': // Bengali
+      case 'bn-IN':
         return GoogleFonts.notoSansBengali();
-      case 'te-IN': // Telugu
+      case 'te-IN':
         return GoogleFonts.notoSansTelugu();
-      case 'mr-IN': // Marathi
+      case 'mr-IN':
         return GoogleFonts.notoSansDevanagari();
-      case 'ta-IN': // Tamil
+      case 'ta-IN':
         return GoogleFonts.notoSansTamil();
-      case 'ur-IN': // Urdu
+      case 'ur-IN':
         return GoogleFonts.notoNastaliqUrdu();
-      case 'gu-IN': // Gujarati
+      case 'gu-IN':
         return GoogleFonts.notoSansGujarati();
-      case 'kn-IN': // Kannada
+      case 'kn-IN':
         return GoogleFonts.notoSansKannada();
-      case 'ml-IN': // Malayalam
+      case 'ml-IN':
         return GoogleFonts.notoSansMalayalam();
-      case 'pa-IN': // Punjabi
+      case 'pa-IN':
         return GoogleFonts.notoSansGurmukhi();
-      default: // English and others
+      default:
         return GoogleFonts.roboto();
     }
   }
+
+  List<Map<String, String>> _getAdvocateSuggestions() {
+    return [
+      {
+        'name': 'Advocate John Doe',
+        'phone': '+91 1234567890',
+        'email': 'john.doe@example.com',
+      },
+      {
+        'name': 'Advocate Jane Smith',
+        'phone': '+91 9876543210',
+        'email': 'jane.smith@example.com',
+      },
+    ];
+  }
+
+  void _showAdvocateSuggestions() {
+    final advocates = _getAdvocateSuggestions();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Suggested Advocates'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: advocates.map((advocate) {
+              return ListTile(
+                title: Text(advocate['name'] ?? ''),
+                subtitle: Text('Phone: ${advocate['phone']}\nEmail: ${advocate['email']}'),
+              );
+            }).toList(),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -200,16 +414,17 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
           ),
           Column(
             children: [
-              // Language selection dropdown
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: DropdownButton<String>(
                   value: _selectedLanguage,
                   onChanged: (String? newValue) {
-                    setState(() {
-                      _selectedLanguage = newValue!;
-                    });
-                    _initTts(); // Reinitialize TTS with the new language
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedLanguage = newValue;
+                      });
+                      _initTts();
+                    }
                   },
                   items: indianLanguages.entries.map((entry) {
                     return DropdownMenuItem<String>(
@@ -229,7 +444,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                       children: [
                         ListTile(
                           title: Text(
-                            "You: ${entry['question']}",
+                            "You: ${entry['question'] ?? 'No Question'}",
                             style: getFontStyleForLanguage(_selectedLanguage).copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
@@ -243,7 +458,7 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                               } else if (value == 'share') {
                                 shareMessage(index);
                               } else if (value == 'speak') {
-                                _speak(entry['answer']!); // Speak the answer
+                                _speak(entry['answer'] ?? '');
                               }
                             },
                             itemBuilder: (BuildContext context) => [
@@ -262,74 +477,79 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
                             ],
                           ),
                         ),
-                        ListTile(
-                          title: Text(
-                            "LawGPT: ${entry['answer']}",
-                            style: getFontStyleForLanguage(_selectedLanguage).copyWith(
-                              color: Colors.black,
+                          ListTile(
+                            title: Text(
+                              "LawGPT: ${entry['answer'] ?? 'No Answer'}",
+                              style: getFontStyleForLanguage(_selectedLanguage).copyWith(
+                                color: Colors.black,
+                              ),
+                            ),
+                            tileColor: Colors.white.withOpacity(0.8),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    isSpeaking ? Icons.stop_circle : Icons.volume_up,
+                                    color: isSpeaking ? Colors.red : null,
+                                  ),
+                                  onPressed: () {
+                                    _speak(entry['answer'] ?? '');
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                          tileColor: Colors.white.withOpacity(0.8),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.volume_up),
-                            onPressed: () {
-                              _speak(entry['answer']!); // Speak the answer
-                            },
-                          ),
-                        ),
-                      ],
-                    );
-                  },
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-              if (isLoading)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: CircularProgressIndicator(),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: controller,
-                        decoration: InputDecoration(
-                          hintText: "Ask a question...",
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.8),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                if (isLoading)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: CircularProgressIndicator(),
+                  ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: controller,
+                          decoration: InputDecoration(
+                            hintText: "Ask a question...",
+                            filled: true,
+                            fillColor: Colors.white.withOpacity(0.8),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                           ),
+                          style: getFontStyleForLanguage(_selectedLanguage),
+                          onChanged: (text) {
+                            setState(() {});
+                          },
                         ),
-                        style: getFontStyleForLanguage(_selectedLanguage),
-                        onChanged: (text) {
-                          // Update the state when text changes
-                          setState(() {});
-                        },
                       ),
-                    ),
-                    IconButton(
-                      icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
-                      color: Colors.red,
-                      onPressed: () {
-                        _isListening ? _stopListening() : _startListening();
-                      },
-                    ),
-                    // Send button (only enabled if there is text)
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      color: controller.text.isNotEmpty
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey,
-                      onPressed: controller.text.isNotEmpty ? askQuestion : null,
-                    ),
-                  ],
+                      IconButton(
+                        icon: Icon(_isListening ? Icons.mic : Icons.mic_none),
+                        color: _isListening ? Colors.red : Colors.grey,
+                        onPressed: _toggleListening,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.send),
+                        color: controller.text.isNotEmpty
+                            ? Theme.of(context).primaryColor
+                            : Colors.grey,
+                        onPressed: controller.text.isNotEmpty ? askQuestion : null,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }}
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+  }

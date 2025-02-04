@@ -1,4 +1,5 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -7,7 +8,6 @@ import 'package:judica/police/police_home.dart';
 import 'package:judica/common_pages/register.dart';
 import 'package:judica/user/user_home.dart';
 import 'package:judica/common_pages/forgot_password.dart';
-// Ensure this is implemented
 import '../auth/auth_services.dart';
 
 class LoginPage extends StatefulWidget {
@@ -18,7 +18,6 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool isDialogVisible = false;
   bool _isPasswordVisible = false; // Added for password visibility toggle
   bool _isLoading = false; // For Google sign-in loading
 
@@ -27,7 +26,6 @@ class _LoginPageState extends State<LoginPage> {
     if (!_validateFields()) return;
 
     try {
-      showLoadingDialog();
       UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
@@ -38,8 +36,6 @@ class _LoginPageState extends State<LoginPage> {
           .doc(userCredential.user?.email)
           .get();
 
-      if (mounted) Navigator.pop(context);
-
       if (userDoc.exists && userDoc.data() != null) {
         String role = userDoc.get('role') ?? '';
         _navigateToHome(role);
@@ -47,7 +43,6 @@ class _LoginPageState extends State<LoginPage> {
         _displayMessageToUser(AppLocalizations.of(context)!.usernotfound);
       }
     } catch (e) {
-      if (mounted) Navigator.pop(context);
       _displayMessageToUser('Error: ${e.toString()}');
     }
   }
@@ -85,44 +80,6 @@ class _LoginPageState extends State<LoginPage> {
       context,
       MaterialPageRoute(builder: (context) => homePage!),
     );
-  }
-
-  void showLoadingDialog() {
-    if (isDialogVisible) return;
-
-    isDialogVisible = true;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return WillPopScope(
-          onWillPop: () async => false,
-          child: Center(
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SpinKitCircle(
-                    color: Color.fromRGBO(251, 146, 60, 1),
-                    size: 50.0,
-                  ),
-                  SizedBox(height: 10),
-                  Text(
-                    "Please wait...",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    ).then((_) => isDialogVisible = false);
   }
 
   void _displayMessageToUser(String message) {
@@ -262,7 +219,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget _buildSocialLogin() {
     return Column(
       children: [
-        Text("Continue",
+        Text(
+          "Continue",
           style: TextStyle(color: Colors.black),
         ),
         const SizedBox(height: 10),
@@ -274,10 +232,17 @@ class _LoginPageState extends State<LoginPage> {
                 setState(() {
                   _isLoading = true;
                 });
-                await AuthServices().signInWithGoogle(context);
-                setState(() {
-                  _isLoading = false;
-                });
+                try {
+                  await AuthServices().signInWithGoogle(context);
+                } catch (e) {
+                  _displayMessageToUser('Error: ${e.toString()}');
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      _isLoading = false;
+                    });
+                  }
+                }
               },
               child: _isLoading
                   ? const SpinKitCircle(
@@ -287,12 +252,6 @@ class _LoginPageState extends State<LoginPage> {
                   : Image.asset('assets/google.png', width: 50),
             ),
             const SizedBox(width: 25),
-            GestureDetector(
-              onTap: () {
-                // Implement Apple sign-in logic
-              },
-              child: Image.asset('assets/apple.png', width: 50),
-            ),
           ],
         ),
       ],
@@ -311,7 +270,8 @@ class _LoginPageState extends State<LoginPage> {
               MaterialPageRoute(builder: (context) => const RegisterPage()),
             );
           },
-          child:Text(AppLocalizations.of(context)!.sign,
+          child: Text(
+            AppLocalizations.of(context)!.sign,
             style: TextStyle(color: Colors.blue),
           ),
         ),

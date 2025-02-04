@@ -62,6 +62,7 @@ class Authpage extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
+                  // Handle error gracefully
                   return const Center(child: Text('Error fetching user role'));
                 }
                 return snapshot.data ?? const SplashScreen();

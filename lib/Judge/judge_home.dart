@@ -21,8 +21,8 @@ class _UserHomeState extends State<AdvocateHome> {
   // Define the pages for navigation
   static final List<Widget> _pages = <Widget>[
     const Bailpage(), // FIR-related component
-    const ChatScreenJudge(),
-    OpenChatRoomViewa(),// Placeholder for Home Page
+    const ChatScreenjudge(),
+    OpenChatRoomView(),// Placeholder for Home Page
     const ProfilePage(),
 
   ];
@@ -72,11 +72,6 @@ class _UserHomeState extends State<AdvocateHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Judica"),
-        backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Lighter orange
-        automaticallyImplyLeading: false, // Removes the back button
-      ),
       body: _pages[_selectedIndex], // Display the selected page
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[

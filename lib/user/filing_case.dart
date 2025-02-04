@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ComplaintForm extends StatefulWidget {
   @override
@@ -16,28 +17,153 @@ class ComplaintForm extends StatefulWidget {
 class _ComplaintFormState extends State<ComplaintForm> {
   final _formKey = GlobalKey<FormState>();
   String _incidentDescription = '';
-  String _priority = "Low"; // Default priority
-  String _status = "Pending"; // Default status
+  String _priority = "Low";
+  String _status = "Pending";
   Position? _currentPosition;
   File? _selectedFile;
   final _imagePicker = ImagePicker();
   final String cloudinaryUrl = "https://api.cloudinary.com/v1_1/dgdxa7qqg/image/upload";
   final String cloudinaryPreset = "Judica";
-
-  // Get current user details
   final User? _currentUser = FirebaseAuth.instance.currentUser;
+  bool _isLoadingLocation = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationPermission();
+  }
+
+  Future<void> _checkLocationPermission() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location services are disabled. Please enable them in settings.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permissions are denied.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location permissions are permanently denied.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+      return;
+    }
+  }
 
   Future<void> _getCurrentLocation() async {
     try {
+      // First check if location service is enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location services are disabled. Please enable them in your device settings.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Request permission explicitly
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+
+        if (permission == LocationPermission.denied) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Location permission denied. Please enable it in your app settings.'),
+                duration: Duration(seconds: 3),
+              ),
+            );
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Location permission permanently denied. Please enable it in your app settings.'),
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+        return;
+      }
+
+      // Show loading indicator
+      setState(() {
+        _isLoadingLocation = true;
+      });
+
+      // Get current position with timeout
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      ).whenComplete(() {
+        setState(() {
+          _isLoadingLocation = false;
+        });
+      });
+
       setState(() {
         _currentPosition = position;
       });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Location fetched successfully!'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error fetching location: $e")),
-      );
+      setState(() {
+        _isLoadingLocation = false;
+      });
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error getting location: ${e.toString()}'),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -62,12 +188,14 @@ class _ComplaintFormState extends State<ComplaintForm> {
         final jsonResponse = json.decode(responseData);
         return jsonResponse['secure_url'];
       } else {
-        throw Exception("Failed to upload file to Cloudinary.");
+        throw Exception("Failed to upload file");
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error uploading file: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error uploading file: $e")),
+        );
+      }
       return null;
     }
   }
@@ -83,10 +211,8 @@ class _ComplaintFormState extends State<ComplaintForm> {
       }
 
       try {
-        // Generate a unique complaint ID using UUID
-        String complaintId = Uuid().v4();
+        String complaintId = const Uuid().v4();
 
-        // Add the complaint to Firestore
         await FirebaseFirestore.instance.collection('complaints').doc(complaintId).set({
           'description': _incidentDescription,
           'priority': _priority,
@@ -97,15 +223,17 @@ class _ComplaintFormState extends State<ComplaintForm> {
           'location': _currentPosition != null
               ? {
             'latitude': _currentPosition!.latitude,
-            'longitude': _currentPosition!.longitude,
+            'longitude': _currentPosition!.longitude
           }
               : null,
           'fileUrl': fileUrl,
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Complaint submitted successfully!")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Complaint submitted successfully!")),
+          );
+        }
 
         setState(() {
           _formKey.currentState!.reset();
@@ -113,9 +241,11 @@ class _ComplaintFormState extends State<ComplaintForm> {
           _selectedFile = null;
         });
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error submitting complaint: $e")),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Error submitting complaint: $e")),
+          );
+        }
       }
     }
   }
@@ -124,116 +254,90 @@ class _ComplaintFormState extends State<ComplaintForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
-        children:[Container(
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/ChatBotBackground.jpg"),
-              fit: BoxFit.cover,
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage("assets/ChatBotBackground.jpg"),
+                fit: BoxFit.cover,
+              ),
             ),
           ),
-        ), Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(height: 80,),
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: "Incident Description",
-                    border: OutlineInputBorder(),
-                  ),
-                  maxLines: 4,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return "Please provide a description of the incident.";
-                    }
-                    return null;
-                  },
-                  onSaved: (value) {
-                    _incidentDescription = value!;
-                  },
-                ),
-                SizedBox(height: 40),
-                DropdownButtonFormField<String>(
-                  value: _priority,
-                  decoration: InputDecoration(
-                    labelText: "Priority",
-                    border: OutlineInputBorder(),
-                  ),
-                  items: ["Low", "Medium", "High"]
-                      .map((priority) => DropdownMenuItem(
-                    value: priority,
-                    child: Text(priority),
-                  ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _priority = value!;
-                    });
-                  },
-                  onSaved: (value) {
-                    _priority = value!;
-                  },
-                ),
-                SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _getCurrentLocation,
-                  icon: Icon(Icons.location_on),
-                  label: Text("Use Current Location"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    textStyle: const TextStyle(fontSize: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 80),
+                    TextFormField(
+                      decoration: const InputDecoration(
+                        labelText: "Incident Description",
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 4,
+                      validator: (value) =>
+                      value == null || value.isEmpty ? "Please provide a description." : null,
+                      onSaved: (value) => _incidentDescription = value!,
                     ),
-                  ),
-                ),
-                if (_currentPosition != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text(
-                      "Location: Lat: ${_currentPosition!.latitude}, Lng: ${_currentPosition!.longitude}",
-                      style: TextStyle(color: Colors.green),
+                    const SizedBox(height: 40),
+                    DropdownButtonFormField<String>(
+                      value: _priority,
+                      decoration: const InputDecoration(
+                        labelText: "Priority",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: ["Low", "Medium", "High"]
+                          .map((priority) => DropdownMenuItem(
+                        value: priority,
+                        child: Text(priority),
+                      ))
+                          .toList(),
+                      onChanged: (value) => setState(() => _priority = value!),
                     ),
-                  ),SizedBox(height: 20,),
-                ElevatedButton.icon(
-                  onPressed: _pickFile,
-                  icon: Icon(Icons.attach_file),
-                  label: Text("Attach Media/Document"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    textStyle: const TextStyle(fontSize: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                      icon: _isLoadingLocation
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                          : const Icon(Icons.location_on),
+                      label: Text(_isLoadingLocation ? "Getting Location..." : "Use Current Location"),
                     ),
-                  ),
-                ),
-                if (_selectedFile != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Text("File selected: ${_selectedFile!.path.split('/').last}"),
-                  ),
-                Spacer(),
-                ElevatedButton(
-                  onPressed: _submitComplaint,
-                  child: Text("Submit Complaint"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    textStyle: const TextStyle(fontSize: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                    if (_currentPosition != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          "Location: ${_currentPosition!.latitude.toStringAsFixed(4)}, ${_currentPosition!.longitude.toStringAsFixed(4)}",
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: _pickFile,
+                      icon: const Icon(Icons.attach_file),
+                      label: const Text("Attach Media"),
                     ),
-                  ),
+                    if (_selectedFile != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text("File selected: ${_selectedFile!.path.split('/').last}"),
+                      ),
+                    const SizedBox(height: 20),
+                    ElevatedButton(
+                      onPressed: _submitComplaint,
+                      child: const Text("Submit Complaint"),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),]
+        ],
       ),
     );
   }

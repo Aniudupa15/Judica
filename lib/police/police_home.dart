@@ -7,6 +7,7 @@ import 'package:judica/police/engagement.dart';
 import 'package:judica/police/police_complaint_dashboard.dart';
 import 'fir_page.dart'; // Import your FIR page
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 class PoliceHome extends StatefulWidget {
   const PoliceHome({super.key});
 
@@ -25,7 +26,7 @@ class _PoliceHomeState extends State<PoliceHome> {
     ComplaintManagementDashboard(),
     PoliceEngagementScreen(),
     const ProfilePage(),
-// Profile Page
+    // Profile Page
   ];
 
   // Function to handle tab selection
@@ -47,7 +48,7 @@ class _PoliceHomeState extends State<PoliceHome> {
       if (docSnapshot.exists &&
           docSnapshot.data()?['Mobile Number'] != null &&
           docSnapshot.data()?['email'] != null &&
-          docSnapshot.data()?['username'] != null && // Fixed typo ('usernanme' to 'username')
+          docSnapshot.data()?['username'] != null &&
           docSnapshot.data()?['role'] != null) {
         // User has complete data, stay on Home page
         setState(() {
@@ -72,9 +73,11 @@ class _PoliceHomeState extends State<PoliceHome> {
 
   @override
   Widget build(BuildContext context) {
+    final appLocalizations = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title:  Text(AppLocalizations.of(context)!.judica),
+        title: Text(appLocalizations?.judica ?? 'Judica'), // Use fallback text if null
         backgroundColor: const Color.fromRGBO(255, 165, 89, 1), // Lighter orange
         automaticallyImplyLeading: false, // Removes the back button
       ),
@@ -87,40 +90,39 @@ class _PoliceHomeState extends State<PoliceHome> {
         ),
         child: _pages[_selectedIndex], // Display the selected page
       ),
-        bottomNavigationBar: Theme(
-          data: ThemeData(
-            canvasColor: const Color.fromRGBO(255, 165, 89, 1), // Set background color here
-          ),
-          child: BottomNavigationBar(
-            items:  <BottomNavigationBarItem>[
-              BottomNavigationBarItem(
-                icon: Icon(Icons.assignment), // Updated icon for FIR
-                label: 'FIR',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.chat),
-                label: AppLocalizations.of(context)!.chatbot,
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.dashboard),
-                label: AppLocalizations.of(context)!.main,
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.remove_from_queue_sharp),
-                label: AppLocalizations.of(context)!.create,
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.person),
-                label: AppLocalizations.of(context)!.profile,
-              ),
-            ],
-            currentIndex: _selectedIndex, // Highlight the selected tab
-            selectedItemColor: Colors.white, // Selected icon color
-            unselectedItemColor: Colors.black54, // Unselected icon color
-            onTap: _onItemTapped, // Handle tab selection
-          ),
-        )
-
+      bottomNavigationBar: Theme(
+        data: ThemeData(
+          canvasColor: const Color.fromRGBO(255, 165, 89, 1), // Set background color here
+        ),
+        child: BottomNavigationBar(
+          items: <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.assignment), // Updated icon for FIR
+              label: 'FIR',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: appLocalizations?.chatbot ?? 'Chatbot', // Use fallback text if null
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: appLocalizations?.main ?? 'Main', // Use fallback text if null
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.remove_from_queue_sharp),
+              label: appLocalizations?.create ?? 'Create', // Use fallback text if null
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: appLocalizations?.profile ?? 'Profile', // Use fallback text if null
+            ),
+          ],
+          currentIndex: _selectedIndex, // Highlight the selected tab
+          selectedItemColor: Colors.white, // Selected icon color
+          unselectedItemColor: Colors.black54, // Unselected icon color
+          onTap: _onItemTapped, // Handle tab selection
+        ),
+      ),
     );
   }
 }

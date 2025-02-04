@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class LawGPTService {
-  final String baseUrl = "wss://aniudupa-fir-gen.hf.space/lawgpt/";
+  final String baseUrl = "https://aniudupa-fir-gen.hf.space/lawgpt/";
 
   Future<String> askQuestion(String question, List<String> chatHistory) async {
     try {

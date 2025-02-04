@@ -206,7 +206,7 @@ class _BailpageState extends State<Bailpage> {
         'penalty_severity': penaltySeverity,
       };
 
-      const apiUrl = 'wss://aniudupa-fir-gen.hf.space/bail-reckoner/predict-bail';
+      const apiUrl = 'https://aniudupa-fir-gen.hf.space/bail-reckoner/predict-bail';
       try {
         final response = await http.post(
           Uri.parse(apiUrl),
