@@ -1,14 +1,15 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:judica/Judge/judge_home.dart';
+import 'package:judica/auth/admin_page.dart';
 import 'package:judica/police/police_home.dart';
 import 'package:judica/common_pages/register.dart';
 import 'package:judica/user/user_home.dart';
 import 'package:judica/common_pages/forgot_password.dart';
 import '../auth/auth_services.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -18,8 +19,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  bool _isPasswordVisible = false; // Added for password visibility toggle
-  bool _isLoading = false; // For Google sign-in loading
+  bool _isPasswordVisible = false;
+  bool _isLoading = false;
 
   // Login function
   Future<void> login() async {
@@ -37,11 +38,52 @@ class _LoginPageState extends State<LoginPage> {
           .get();
 
       if (userDoc.exists && userDoc.data() != null) {
-        String role = userDoc.get('role') ?? '';
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        String role = userData['role'] ?? '';
+
+        // Check approval status for Judge and Police roles
+        if (role == 'Judge' || role == 'Police') {
+          bool isApproved = userData['isApproved'] ?? false;
+          String approvalStatus = userData['approvalStatus'] ?? 'pending';
+
+          if (!isApproved || approvalStatus != 'approved') {
+            // Sign out the user
+            await FirebaseAuth.instance.signOut();
+
+            // Show appropriate message based on status
+            if (approvalStatus == 'rejected') {
+              _displayMessageToUser('Your account has been rejected. Please contact support.');
+            } else {
+              _displayMessageToUser('Your account is pending approval. Please wait for admin verification.');
+            }
+            return;
+          }
+        }
+
+        // If approved or Citizen/Admin, navigate to home
         _navigateToHome(role);
       } else {
         _displayMessageToUser(AppLocalizations.of(context)!.usernotfound);
       }
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'user-not-found':
+          message = 'No user found with this email.';
+          break;
+        case 'wrong-password':
+          message = 'Incorrect password.';
+          break;
+        case 'invalid-email':
+          message = 'Invalid email address.';
+          break;
+        case 'user-disabled':
+          message = 'This account has been disabled.';
+          break;
+        default:
+          message = 'Error: ${e.message}';
+      }
+      _displayMessageToUser(message);
     } catch (e) {
       _displayMessageToUser('Error: ${e.toString()}');
     }
@@ -71,12 +113,14 @@ class _LoginPageState extends State<LoginPage> {
       case 'Judge':
         homePage = const AdvocateHome();
         break;
+      case 'Admin':
+        homePage = const AdminPage();
+        break;
       default:
         _displayMessageToUser(AppLocalizations.of(context)!.usernotfound);
         return;
     }
-
-    Navigator.push(
+    Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => homePage!),
     );
@@ -84,7 +128,10 @@ class _LoginPageState extends State<LoginPage> {
 
   void _displayMessageToUser(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 4),
+      ),
     );
   }
 
@@ -160,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: TextField(
         controller: controller,
-        obscureText: obscureText && !_isPasswordVisible, // Use the visibility state
+        obscureText: obscureText && !_isPasswordVisible,
         decoration: InputDecoration(
           suffixIcon: obscureText
               ? IconButton(
@@ -236,6 +283,7 @@ class _LoginPageState extends State<LoginPage> {
                   await AuthServices().signInWithGoogle(context);
                 } catch (e) {
                   _displayMessageToUser('Error: ${e.toString()}');
+                  print("hello ${e.toString()}");
                 } finally {
                   if (mounted) {
                     setState(() {

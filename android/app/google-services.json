@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "636016915209",
+    "project_id": "judica-cc7c2",
+    "storage_bucket": "judica-cc7c2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636016915209:android:b2f3a98c2c7e346f18d9d8",
+        "android_client_info": {
+          "package_name": "com.example.judica"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "636016915209-dmt7pkr09d1t910021770jvm35fo6imv.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.judica",
+            "certificate_hash": "bd65714600ceee36e31c6ba97e6769579284b808"
+          }
+        },
+        {
+          "client_id": "636016915209-ifhmsh677n2cdpfn1ta0nm91l190otrc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5vx2vUEMXciCEq9bgMKj_H42Jzz8TH1w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "636016915209-ifhmsh677n2cdpfn1ta0nm91l190otrc.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "636016915209-ia2ovvm08eag02k5difjo2fls1fcvpe8.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.hackathon"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

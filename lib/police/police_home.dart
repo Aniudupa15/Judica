@@ -5,8 +5,8 @@ import 'package:judica/common_pages/profile.dart';
 import 'package:judica/police/chat_bot_police.dart';
 import 'package:judica/police/engagement.dart';
 import 'package:judica/police/police_complaint_dashboard.dart';
+import '../l10n/app_localizations.dart';
 import 'fir_page.dart'; // Import your FIR page
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class PoliceHome extends StatefulWidget {
   const PoliceHome({super.key});

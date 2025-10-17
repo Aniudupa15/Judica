@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:judica/Judge/judge_home.dart';
+import 'package:judica/auth/admin_page.dart';
 import 'package:judica/police/police_home.dart';
 import '../common_pages/slpash_screen.dart';
 import '../user/user_home.dart'; // Import your splash screen here
@@ -33,6 +34,7 @@ class Authpage extends StatelessWidget {
     String role = await getUserRole(user.email!);
 
     return switch (role) {
+      'Admin' => const AdminPage(),
       'Citizen' => const UserHome(),
       'Police' => const PoliceHome(),
       'Judge' => const AdvocateHome(),

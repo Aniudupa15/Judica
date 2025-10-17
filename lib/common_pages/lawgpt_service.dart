@@ -46,27 +46,3 @@ class LawGPTService {
     }
   }
 }
-
-void main() async {
-  final service = LawGPTService();
-
-  try {
-    final question = "What is Section 302 of IPC?";
-    final chatHistory = [
-      "What is Section 300 of IPC?",
-      "What are the provisions under it?"
-    ];
-
-    if (kDebugMode) {
-      print("Sending question to LawGPT...");
-    }
-    final answer = await service.askQuestion(question, chatHistory);
-    if (kDebugMode) {
-      print("LawGPT Answer: $answer");
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print("Error: $e");
-    }
-  }
-}
