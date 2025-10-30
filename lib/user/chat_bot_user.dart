@@ -1122,7 +1122,6 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
   final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
   bool isSpeaking = false;
-  String _text = "Tap the microphone to start";
   String _selectedLanguage = 'en-IN';
   final FlutterTts flutterTts = FlutterTts();
 
@@ -1357,12 +1356,10 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
       bool available = await _speech.initialize();
       if (!available) {
         setState(() {
-          _text = "Speech recognition is not available.";
         });
       }
     } catch (e) {
       setState(() {
-        _text = "Failed to initialize speech recognition: $e";
       });
     }
   }
@@ -1381,18 +1378,15 @@ class _ChatScreenUserState extends State<ChatScreenUser> {
       if (available) {
         setState(() {
           _isListening = true;
-          _text = "Listening...";
         });
       } else {
         setState(() {
-          _text = "Speech recognition not available";
         });
       }
     } else {
       await _speech.stop();
       setState(() {
         _isListening = false;
-        _text = "Tap the microphone to start";
       });
     }
   }

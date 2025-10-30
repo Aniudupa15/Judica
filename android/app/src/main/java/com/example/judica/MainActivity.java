@@ -1,4 +1,4 @@
-package com.example.judica;
+package com.ani.judica;
 
 import io.flutter.embedding.android.FlutterActivity;
 

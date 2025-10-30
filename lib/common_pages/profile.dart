@@ -879,7 +879,6 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 
 const Color _primaryColor = Color.fromRGBO(255, 125, 41, 1);
-const Color _backgroundColor = Color.fromRGBO(250, 249, 246, 1);
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

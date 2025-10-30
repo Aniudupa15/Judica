@@ -1,16 +1,1 @@
-{
-  "hosting": {
-    "public": "build/web",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
-}
+{"flutter":{"platforms":{"android":{"default":{"projectId":"judica-cc7c2","appId":"1:636016915209:android:198e6fa573705f3c18d9d8","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"judica-cc7c2","configurations":{"android":"1:636016915209:android:198e6fa573705f3c18d9d8","ios":"1:636016915209:ios:92cb6b47b248bd8118d9d8","macos":"1:636016915209:ios:92cb6b47b248bd8118d9d8","web":"1:636016915209:web:e2b500dbb7afab4318d9d8","windows":"1:636016915209:web:96f9183b97c7a5d618d9d8"}}}}}}

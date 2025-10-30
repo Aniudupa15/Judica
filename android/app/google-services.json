@@ -7,17 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:636016915209:android:b2f3a98c2c7e346f18d9d8",
+        "mobilesdk_app_id": "1:636016915209:android:198e6fa573705f3c18d9d8",
         "android_client_info": {
-          "package_name": "com.example.judica"
+          "package_name": "com.ani.judica"
         }
       },
       "oauth_client": [
         {
-          "client_id": "636016915209-dmt7pkr09d1t910021770jvm35fo6imv.apps.googleusercontent.com",
+          "client_id": "636016915209-gbl5mfjoc5hq2bv1msbq780h9qb4mstj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.judica",
+            "package_name": "com.ani.judica",
             "certificate_hash": "bd65714600ceee36e31c6ba97e6769579284b808"
           }
         },
@@ -39,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "636016915209-ia2ovvm08eag02k5difjo2fls1fcvpe8.apps.googleusercontent.com",
+              "client_id": "636016915209-e45t0tjks62clovj0v72ls19uaam3qql.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.hackathon"
+                "bundle_id": "com.ani.judica"
               }
             }
           ]

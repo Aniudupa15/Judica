@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -27,22 +26,14 @@ class _PoliceEngagementScreenState extends State<PoliceEngagementScreen> with Si
   TextEditingController _announcementInstructionsController = TextEditingController();
 
   // To hold the created surveys list from Firestore
-  List<Map<String, dynamic>> _surveysList = [];
 
   // To hold the survey responses list from Firestore
   List<Map<String, dynamic>> _surveyResponsesList = [];
 
   // Fetch created surveys from Firestore
   void _fetchSurveys() async {
-    final surveysSnapshot = await FirebaseFirestore.instance.collection('surveys').get();
+    await FirebaseFirestore.instance.collection('surveys').get();
     setState(() {
-      _surveysList = surveysSnapshot.docs.map((doc) {
-        return {
-          'id': doc.id,
-          'title': doc['title'],
-          'questions': List<Map<String, dynamic>>.from(doc['questions'] ?? []), // Null safety
-        };
-      }).toList();
     });
   }
 

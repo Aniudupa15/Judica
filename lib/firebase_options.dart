@@ -47,11 +47,12 @@ class DefaultFirebaseOptions {
     projectId: 'judica-cc7c2',
     authDomain: 'judica-cc7c2.firebaseapp.com',
     storageBucket: 'judica-cc7c2.firebasestorage.app',
+    measurementId: 'G-1JRWSBHR8S',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyC5vx2vUEMXciCEq9bgMKj_H42Jzz8TH1w',
-    appId: '1:636016915209:android:b2f3a98c2c7e346f18d9d8',
+    appId: '1:636016915209:android:198e6fa573705f3c18d9d8',
     messagingSenderId: '636016915209',
     projectId: 'judica-cc7c2',
     storageBucket: 'judica-cc7c2.firebasestorage.app',
@@ -59,24 +60,24 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAjVP9lh04NrEp7-YLEX3Nhm5dsriHFVKQ',
-    appId: '1:636016915209:ios:ef9a00857354675218d9d8',
+    appId: '1:636016915209:ios:92cb6b47b248bd8118d9d8',
     messagingSenderId: '636016915209',
     projectId: 'judica-cc7c2',
     storageBucket: 'judica-cc7c2.firebasestorage.app',
     androidClientId: '636016915209-7artoro9nhuvjc0s9rb9eomfsh114quu.apps.googleusercontent.com',
-    iosClientId: '636016915209-ls73sda5r15jc334s4e9mamjt66h8bbc.apps.googleusercontent.com',
-    iosBundleId: 'com.example.judica',
+    iosClientId: '636016915209-e45t0tjks62clovj0v72ls19uaam3qql.apps.googleusercontent.com',
+    iosBundleId: 'com.ani.judica',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyAjVP9lh04NrEp7-YLEX3Nhm5dsriHFVKQ',
-    appId: '1:636016915209:ios:ef9a00857354675218d9d8',
+    appId: '1:636016915209:ios:92cb6b47b248bd8118d9d8',
     messagingSenderId: '636016915209',
     projectId: 'judica-cc7c2',
     storageBucket: 'judica-cc7c2.firebasestorage.app',
     androidClientId: '636016915209-7artoro9nhuvjc0s9rb9eomfsh114quu.apps.googleusercontent.com',
-    iosClientId: '636016915209-ls73sda5r15jc334s4e9mamjt66h8bbc.apps.googleusercontent.com',
-    iosBundleId: 'com.example.judica',
+    iosClientId: '636016915209-e45t0tjks62clovj0v72ls19uaam3qql.apps.googleusercontent.com',
+    iosBundleId: 'com.ani.judica',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
@@ -86,5 +87,7 @@ class DefaultFirebaseOptions {
     projectId: 'judica-cc7c2',
     authDomain: 'judica-cc7c2.firebaseapp.com',
     storageBucket: 'judica-cc7c2.firebasestorage.app',
+    measurementId: 'G-F1F7N350P8',
   );
+
 }

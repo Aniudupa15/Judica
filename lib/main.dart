@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:judica/auth/auth.dart';
-import 'auth/firebase_options.dart';
+
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,23 +23,25 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
-      debugShowCheckedModeBanner: false,
-      supportedLocales: [
-        Locale('en'),
-        Locale('hi'),
-        Locale('kn'),
-        Locale('ml'),
-        Locale('te'),
-        Locale('tn'),
-      ],
-      locale: Locale('en'),
-      localizationsDelegates: [
-        GlobalCupertinoLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ],
-      home: Authpage(),
+    return  SafeArea(
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        supportedLocales: [
+          Locale('en'),
+          Locale('hi'),
+          Locale('kn'),
+          Locale('ml'),
+          Locale('te'),
+          Locale('tn'),
+        ],
+        locale: Locale('en'),
+        localizationsDelegates: [
+          GlobalCupertinoLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+        ],
+        home: Authpage(),
+      ),
     );
 }
 }

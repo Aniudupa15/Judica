@@ -135,14 +135,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  InputDecoration _buildInputDecoration(String hintText, IconData icon) {
-    return InputDecoration(
-      suffixIcon: Icon(icon),
-      hintText: hintText,
-      enabledBorder: _buildBorder(),
-      focusedBorder: _buildBorder(),
-    );
-  }
 
   OutlineInputBorder _buildBorder() {
     return const OutlineInputBorder(
