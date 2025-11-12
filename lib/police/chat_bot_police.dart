@@ -773,7 +773,7 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> with TickerProvider
       backgroundColor: Colors.grey.shade50,
       body: Column(
         children: [
-          _buildAppBar(),
+          // _buildAppBar(),
           Expanded(
             child: chatHistory.isEmpty
                 ? _buildEmptyState()
@@ -795,68 +795,68 @@ class _ChatScreenPoliceState extends State<ChatScreenPolice> with TickerProvider
     );
   }
 
-  Widget _buildAppBar() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4A5FE8), Color(0xFF6B7FFF)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF4A5FE8).withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.gavel, color: Colors.white, size: 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'LawGPT Assistant',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                Text(
-                  'Your AI Legal Advisor',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          _buildLanguageButton(),
-        ],
-      ),
-    );
-  }
+  // Widget _buildAppBar() {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+  //     decoration: BoxDecoration(
+  //       color: Colors.white,
+  //       boxShadow: [
+  //         BoxShadow(
+  //           color: Colors.black.withOpacity(0.05),
+  //           blurRadius: 10,
+  //           offset: const Offset(0, 2),
+  //         ),
+  //       ],
+  //     ),
+  //     child: Row(
+  //       children: [
+  //         Container(
+  //           padding: const EdgeInsets.all(10),
+  //           decoration: BoxDecoration(
+  //             gradient: const LinearGradient(
+  //               colors: [Color(0xFF4A5FE8), Color(0xFF6B7FFF)],
+  //               begin: Alignment.topLeft,
+  //               end: Alignment.bottomRight,
+  //             ),
+  //             borderRadius: BorderRadius.circular(12),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: const Color(0xFF4A5FE8).withOpacity(0.3),
+  //                 blurRadius: 8,
+  //                 offset: const Offset(0, 4),
+  //               ),
+  //             ],
+  //           ),
+  //           child: const Icon(Icons.gavel, color: Colors.white, size: 24),
+  //         ),
+  //         const SizedBox(width: 12),
+  //         Expanded(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               const Text(
+  //                 'LawGPT Assistant',
+  //                 style: TextStyle(
+  //                   fontSize: 18,
+  //                   fontWeight: FontWeight.bold,
+  //                   color: Colors.black87,
+  //                 ),
+  //               ),
+  //               Text(
+  //                 'Your AI Legal Advisor',
+  //                 style: TextStyle(
+  //                   fontSize: 13,
+  //                   color: Colors.grey.shade600,
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //         _buildLanguageButton(),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildLanguageButton() {
     return GestureDetector(

@@ -2525,7 +2525,7 @@ class _ChatScreenjudgeState extends State<ChatScreenjudge> with TickerProviderSt
       backgroundColor: Colors.grey.shade50,
       body: Column(
         children: [
-          _buildAppBar(),
+          // _buildAppBar(),
           Expanded(
             child: chatHistory.isEmpty
                 ? _buildEmptyState()

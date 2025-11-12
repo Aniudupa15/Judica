@@ -1254,8 +1254,8 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildRoleDropdown() {
     final roles = {
       'Citizen': AppLocalizations.of(context)!.citizen,
-      'Judge': AppLocalizations.of(context)!.police,
-      'Police': AppLocalizations.of(context)!.advocate,
+      'Judge':  AppLocalizations.of(context)!.advocate,
+      'Police':AppLocalizations.of(context)!.police,
     };
 
     return Column(

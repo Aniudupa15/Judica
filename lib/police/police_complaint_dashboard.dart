@@ -1,1209 +1,3 @@
-// // // import 'package:cloud_firestore/cloud_firestore.dart';
-// // // import 'package:flutter/cupertino.dart';
-// // // import 'package:flutter/material.dart';
-// // //
-// // // import '../l10n/app_localizations.dart';
-// // //
-// // // class ComplaintManagementDashboard extends StatefulWidget {
-// // //   @override
-// // //   _ComplaintManagementDashboardState createState() =>
-// // //       _ComplaintManagementDashboardState();
-// // // }
-// // //
-// // // class _ComplaintManagementDashboardState
-// // //     extends State<ComplaintManagementDashboard> with SingleTickerProviderStateMixin {
-// // //   late TabController _tabController;
-// // //   String _selectedPriority = "All";
-// // //
-// // //   @override
-// // //   void initState() {
-// // //     super.initState();
-// // //     _tabController = TabController(length: 2, vsync: this);
-// // //   }
-// // //
-// // //   Stream<QuerySnapshot> _getFilteredComplaints(String priority, bool isResolved) {
-// // //     Query query = FirebaseFirestore.instance.collection('complaints');
-// // //
-// // //     if (priority != 'All') {
-// // //       query = query.where('priority', isEqualTo: priority);
-// // //     }
-// // //
-// // //     if (isResolved) {
-// // //       query = query.where('status', isEqualTo: 'Resolved');
-// // //     } else {
-// // //       query = query.where('status', isNotEqualTo: 'Resolved');
-// // //     }
-// // //
-// // //     return query.orderBy('priority', descending: true).snapshots();
-// // //   }
-// // //
-// // //   @override
-// // //   Widget build(BuildContext context) {
-// // //     return Scaffold(
-// // //       appBar: PreferredSize(
-// // //         preferredSize: Size.fromHeight(kToolbarHeight),
-// // //         child: AppBar(
-// // //           title: null,
-// // //           bottom: TabBar(
-// // //             controller: _tabController,
-// // //             tabs: [
-// // //               Tab(text: AppLocalizations.of(context)?.active ?? 'Active'),
-// // //               Tab(text: AppLocalizations.of(context)?.resolvedcomplaints ?? 'Resolved'),
-// // //             ],
-// // //           ),
-// // //         ),
-// // //       ),
-// // //       body: TabBarView(
-// // //         controller: _tabController,
-// // //         children: [
-// // //           _buildComplaintsTab(false),
-// // //           _buildComplaintsTab(true),
-// // //         ],
-// // //       ),
-// // //     );
-// // //   }
-// // //
-// // //   Widget _buildComplaintsTab(bool isResolved) {
-// // //     return Column(
-// // //       children: [
-// // //         if (!isResolved) _buildPriorityFilters(),
-// // //         Expanded(
-// // //           child: StreamBuilder<QuerySnapshot>(
-// // //             stream: _getFilteredComplaints(_selectedPriority, isResolved),
-// // //             builder: (context, snapshot) {
-// // //               if (snapshot.connectionState == ConnectionState.waiting) {
-// // //                 return Center(child: CircularProgressIndicator());
-// // //               }
-// // //
-// // //               if (snapshot.hasError) {
-// // //                 return Center(child: Text("Error: ${snapshot.error}"));
-// // //               }
-// // //
-// // //               final complaints = snapshot.data?.docs ?? [];
-// // //
-// // //               return ListView.builder(
-// // //                 itemCount: complaints.length,
-// // //                 itemBuilder: (context, index) {
-// // //                   final complaint = complaints[index].data() as Map<String, dynamic>;
-// // //                   final timestamp = complaint['timestamp'];
-// // //
-// // //                   return _buildComplaintCard(complaint, timestamp);
-// // //                 },
-// // //               );
-// // //             },
-// // //           ),
-// // //         ),
-// // //       ],
-// // //     );
-// // //   }
-// // //
-// // //   Widget _buildPriorityFilters() {
-// // //     return SingleChildScrollView(
-// // //       scrollDirection: Axis.horizontal,
-// // //       padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-// // //       child: Row(
-// // //         children: ['All', 'High', 'Medium', 'Low'].map((priority) {
-// // //           return Padding(
-// // //             padding: EdgeInsets.only(right: 8),
-// // //             child: ElevatedButton(
-// // //               onPressed: () => setState(() => _selectedPriority = priority),
-// // //               style: ElevatedButton.styleFrom(
-// // //                 foregroundColor: Colors.white,
-// // //                 backgroundColor: _selectedPriority == priority ? Colors.blue : Colors.grey,
-// // //               ),
-// // //               child: Text(AppLocalizations.of(context)?.all ?? priority),
-// // //             ),
-// // //           );
-// // //         }).toList(),
-// // //       ),
-// // //     );
-// // //   }
-// // //
-// // //   Widget _buildComplaintCard(Map<String, dynamic> complaint, dynamic timestamp) {
-// // //     return Card(
-// // //       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-// // //       child: ListTile(
-// // //         title: Text(
-// // //           complaint['description'] ?? 'No description',
-// // //           maxLines: 2,
-// // //           overflow: TextOverflow.ellipsis,
-// // //         ),
-// // //         subtitle: Column(
-// // //           crossAxisAlignment: CrossAxisAlignment.start,
-// // //           children: [
-// // //             _buildInfoText('Priority', complaint['priority'] ?? 'No priority'),
-// // //             _buildInfoText('Status', complaint['status'] ?? 'No status'),
-// // //             _buildInfoText(
-// // //               'Submitted by',
-// // //               '${complaint['userName'] ?? 'Unknown'}, Phone: ${complaint['userPhone'] ?? 'Unknown'}',
-// // //             ),
-// // //             _buildInfoText(
-// // //               'Timestamp',
-// // //               timestamp != null
-// // //                   ? (timestamp as Timestamp).toDate().toLocal().toString()
-// // //                   : 'N/A',
-// // //             ),
-// // //           ],
-// // //         ),
-// // //         onTap: () => _openComplaintDetails(context, complaint, timestamp),
-// // //       ),
-// // //     );
-// // //   }
-// // //
-// // //   Widget _buildInfoText(String label, String value) {
-// // //     return Padding(
-// // //       padding: EdgeInsets.only(bottom: 4),
-// // //       child: Text(
-// // //         '$label: $value',
-// // //         maxLines: 1,
-// // //         overflow: TextOverflow.ellipsis,
-// // //       ),
-// // //     );
-// // //   }
-// // //
-// // //   void _openComplaintDetails(BuildContext context, Map<String, dynamic> complaint, dynamic timestamp) {
-// // //     showModalBottomSheet(
-// // //       context: context,
-// // //       isScrollControlled: true,
-// // //       builder: (BuildContext context) {
-// // //         return DraggableScrollableSheet(
-// // //           initialChildSize: 0.9,
-// // //           minChildSize: 0.5,
-// // //           maxChildSize: 0.95,
-// // //           builder: (_, controller) {
-// // //             return Container(
-// // //               padding: EdgeInsets.all(16),
-// // //               child: Column(
-// // //                 crossAxisAlignment: CrossAxisAlignment.start,
-// // //                 children: [
-// // //                   Row(
-// // //                     children: [
-// // //                       IconButton(
-// // //                         icon: Icon(Icons.close),
-// // //                         onPressed: () => Navigator.pop(context),
-// // //                       ),
-// // //                       Expanded(
-// // //                         child: Text(
-// // //                           'Complaint Details',
-// // //                           style: Theme.of(context).textTheme.titleLarge,
-// // //                           textAlign: TextAlign.center,
-// // //                         ),
-// // //                       ),
-// // //                       SizedBox(width: 48), // Balance the close button
-// // //                     ],
-// // //                   ),
-// // //                   Expanded(
-// // //                     child: ListView(
-// // //                       controller: controller,
-// // //                       children: [
-// // //                         if (complaint['fileUrl'] != null)
-// // //                           AspectRatio(
-// // //                             aspectRatio: 16 / 9,
-// // //                             child: Image.network(
-// // //                               complaint['fileUrl']!,
-// // //                               fit: BoxFit.cover,
-// // //                               loadingBuilder: (context, child, loadingProgress) {
-// // //                                 if (loadingProgress == null) return child;
-// // //                                 return Center(child: CircularProgressIndicator());
-// // //                               },
-// // //                               errorBuilder: (context, error, stackTrace) =>
-// // //                                   Center(child: Icon(Icons.error)),
-// // //                             ),
-// // //                           ),
-// // //                         SizedBox(height: 16),
-// // //                         _buildDetailItem(
-// // //                           'Description',
-// // //                           complaint['description'] ?? 'No description',
-// // //                           isMultiLine: true,
-// // //                         ),
-// // //                         _buildDetailItem('Priority', complaint['priority'] ?? 'No priority'),
-// // //                         _buildDetailItem('Status', complaint['status'] ?? 'No status'),
-// // //                         _buildDetailItem('Submitted by', complaint['userName'] ?? 'Unknown'),
-// // //                         _buildDetailItem('Phone', complaint['userPhone'] ?? 'Unknown'),
-// // //                         _buildDetailItem(
-// // //                           'Timestamp',
-// // //                           timestamp != null
-// // //                               ? (timestamp as Timestamp).toDate().toLocal().toString()
-// // //                               : 'N/A',
-// // //                         ),
-// // //                       ],
-// // //                     ),
-// // //                   ),
-// // //                 ],
-// // //               ),
-// // //             );
-// // //           },
-// // //         );
-// // //       },
-// // //     );
-// // //   }
-// // //
-// // //   Widget _buildDetailItem(String label, String value, {bool isMultiLine = false}) {
-// // //     return Padding(
-// // //       padding: EdgeInsets.symmetric(vertical: 8),
-// // //       child: Column(
-// // //         crossAxisAlignment: CrossAxisAlignment.start,
-// // //         children: [
-// // //           Text(
-// // //             label,
-// // //             style: TextStyle(
-// // //               fontSize: 14,
-// // //               fontWeight: FontWeight.bold,
-// // //               color: Colors.grey[600],
-// // //             ),
-// // //           ),
-// // //           SizedBox(height: 4),
-// // //           Text(
-// // //             value,
-// // //             style: TextStyle(fontSize: 16),
-// // //             maxLines: isMultiLine ? null : 1,
-// // //             overflow: isMultiLine ? null : TextOverflow.ellipsis,
-// // //           ),
-// // //         ],
-// // //       ),
-// // //     );
-// // //   }
-// // // }
-// //
-// // import 'package:cloud_firestore/cloud_firestore.dart';
-// // import 'package:flutter/cupertino.dart';
-// // import 'package:flutter/material.dart';
-// //
-// // import '../l10n/app_localizations.dart';
-// //
-// // class ComplaintManagementDashboard extends StatefulWidget {
-// //   @override
-// //   _ComplaintManagementDashboardState createState() =>
-// //       _ComplaintManagementDashboardState();
-// // }
-// //
-// // class _ComplaintManagementDashboardState
-// //     extends State<ComplaintManagementDashboard> with SingleTickerProviderStateMixin {
-// //   late TabController _tabController;
-// //   String _selectedPriority = "All";
-// //
-// //   @override
-// //   void initState() {
-// //     super.initState();
-// //     _tabController = TabController(length: 2, vsync: this);
-// //   }
-// //
-// //   @override
-// //   void dispose() {
-// //     _tabController.dispose();
-// //     super.dispose();
-// //   }
-// //
-// //   Stream<QuerySnapshot> _getFilteredComplaints(String priority, bool isResolved) {
-// //     Query query = FirebaseFirestore.instance.collection('complaints');
-// //
-// //     if (priority != 'All') {
-// //       query = query.where('priority', isEqualTo: priority);
-// //     }
-// //
-// //     if (isResolved) {
-// //       query = query.where('status', isEqualTo: 'Resolved');
-// //     } else {
-// //       query = query.where('status', isNotEqualTo: 'Resolved');
-// //     }
-// //
-// //     return query.orderBy('priority', descending: true).snapshots();
-// //   }
-// //
-// //   // Get localized text for priority
-// //   String _getPriorityText(String priority) {
-// //     switch (priority) {
-// //       case 'All':
-// //         return AppLocalizations.of(context)?.all ?? 'All';
-// //       case 'High':
-// //         return AppLocalizations.of(context)?.high ?? 'High';
-// //       case 'Medium':
-// //         return AppLocalizations.of(context)?.medium ?? 'Medium';
-// //       case 'Low':
-// //         return AppLocalizations.of(context)?.low ?? 'Low';
-// //       default:
-// //         return priority;
-// //     }
-// //   }
-// //
-// //   @override
-// //   Widget build(BuildContext context) {
-// //     return Scaffold(
-// //       appBar: PreferredSize(
-// //         preferredSize: Size.fromHeight(kToolbarHeight),
-// //         child: AppBar(
-// //           title: null,
-// //           bottom: TabBar(
-// //             controller: _tabController,
-// //             tabs: [
-// //               Tab(text: AppLocalizations.of(context)?.active ?? 'Active'),
-// //               Tab(text: AppLocalizations.of(context)?.resolvedcomplaints ?? 'Resolved'),
-// //             ],
-// //           ),
-// //         ),
-// //       ),
-// //       body: TabBarView(
-// //         controller: _tabController,
-// //         children: [
-// //           _buildComplaintsTab(false),
-// //           _buildComplaintsTab(true),
-// //         ],
-// //       ),
-// //     );
-// //   }
-// //
-// //   Widget _buildComplaintsTab(bool isResolved) {
-// //     return Column(
-// //       children: [
-// //         if (!isResolved) _buildPriorityFilters(),
-// //         Expanded(
-// //           child: StreamBuilder<QuerySnapshot>(
-// //             stream: _getFilteredComplaints(_selectedPriority, isResolved),
-// //             builder: (context, snapshot) {
-// //               if (snapshot.connectionState == ConnectionState.waiting) {
-// //                 return Center(child: CircularProgressIndicator());
-// //               }
-// //
-// //               if (snapshot.hasError) {
-// //                 return Center(child: Text("Error: ${snapshot.error}"));
-// //               }
-// //
-// //               final complaints = snapshot.data?.docs ?? [];
-// //
-// //               if (complaints.isEmpty) {
-// //                 return Center(
-// //                   child: Text(
-// //                     isResolved
-// //                         ? 'No resolved complaints'
-// //                         : 'No active complaints',
-// //                     style: TextStyle(fontSize: 16, color: Colors.grey),
-// //                   ),
-// //                 );
-// //               }
-// //
-// //               return ListView.builder(
-// //                 itemCount: complaints.length,
-// //                 itemBuilder: (context, index) {
-// //                   final complaint = complaints[index].data() as Map<String, dynamic>;
-// //                   final timestamp = complaint['timestamp'];
-// //
-// //                   return _buildComplaintCard(complaint, timestamp);
-// //                 },
-// //               );
-// //             },
-// //           ),
-// //         ),
-// //       ],
-// //     );
-// //   }
-// //
-// //   Widget _buildPriorityFilters() {
-// //     return SingleChildScrollView(
-// //       scrollDirection: Axis.horizontal,
-// //       padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-// //       child: Row(
-// //         children: ['All', 'High', 'Medium', 'Low'].map((priority) {
-// //           return Padding(
-// //             padding: EdgeInsets.only(right: 8),
-// //             child: ElevatedButton(
-// //               onPressed: () => setState(() => _selectedPriority = priority),
-// //               style: ElevatedButton.styleFrom(
-// //                 foregroundColor: Colors.white,
-// //                 backgroundColor: _selectedPriority == priority ? Colors.blue : Colors.grey,
-// //                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-// //               ),
-// //               child: Text(_getPriorityText(priority)),
-// //             ),
-// //           );
-// //         }).toList(),
-// //       ),
-// //     );
-// //   }
-// //
-// //   Widget _buildComplaintCard(Map<String, dynamic> complaint, dynamic timestamp) {
-// //     // Get priority color
-// //     Color priorityColor = Colors.grey;
-// //     switch (complaint['priority']) {
-// //       case 'High':
-// //         priorityColor = Colors.red;
-// //         break;
-// //       case 'Medium':
-// //         priorityColor = Colors.orange;
-// //         break;
-// //       case 'Low':
-// //         priorityColor = Colors.green;
-// //         break;
-// //     }
-// //
-// //     return Card(
-// //       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-// //       elevation: 2,
-// //       child: ListTile(
-// //         leading: Container(
-// //           width: 4,
-// //           height: double.infinity,
-// //           decoration: BoxDecoration(
-// //             color: priorityColor,
-// //             borderRadius: BorderRadius.circular(2),
-// //           ),
-// //         ),
-// //         title: Text(
-// //           complaint['description'] ?? 'No description',
-// //           maxLines: 2,
-// //           overflow: TextOverflow.ellipsis,
-// //           style: TextStyle(fontWeight: FontWeight.w600),
-// //         ),
-// //         subtitle: Column(
-// //           crossAxisAlignment: CrossAxisAlignment.start,
-// //           children: [
-// //             SizedBox(height: 8),
-// //             Row(
-// //               children: [
-// //                 _buildChip(
-// //                   _getPriorityText(complaint['priority'] ?? 'No priority'),
-// //                   priorityColor,
-// //                 ),
-// //                 SizedBox(width: 8),
-// //                 _buildChip(
-// //                   complaint['status'] ?? 'No status',
-// //                   Colors.blue,
-// //                 ),
-// //               ],
-// //             ),
-// //             SizedBox(height: 4),
-// //             _buildInfoText('Submitted by', complaint['userName'] ?? 'Unknown'),
-// //             _buildInfoText('Phone', complaint['userPhone'] ?? 'Unknown'),
-// //             _buildInfoText(
-// //               'Date',
-// //               timestamp != null
-// //                   ? _formatDate((timestamp as Timestamp).toDate())
-// //                   : 'N/A',
-// //             ),
-// //           ],
-// //         ),
-// //         onTap: () => _openComplaintDetails(context, complaint, timestamp),
-// //         trailing: Icon(Icons.chevron_right),
-// //       ),
-// //     );
-// //   }
-// //
-// //   Widget _buildChip(String label, Color color) {
-// //     return Container(
-// //       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-// //       decoration: BoxDecoration(
-// //         color: color.withOpacity(0.1),
-// //         borderRadius: BorderRadius.circular(12),
-// //         border: Border.all(color: color.withOpacity(0.3)),
-// //       ),
-// //       child: Text(
-// //         label,
-// //         style: TextStyle(
-// //           color: color,
-// //           fontSize: 12,
-// //           fontWeight: FontWeight.bold,
-// //         ),
-// //       ),
-// //     );
-// //   }
-// //
-// //   Widget _buildInfoText(String label, String value) {
-// //     return Padding(
-// //       padding: EdgeInsets.only(bottom: 2),
-// //       child: Text(
-// //         '$label: $value',
-// //         maxLines: 1,
-// //         overflow: TextOverflow.ellipsis,
-// //         style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-// //       ),
-// //     );
-// //   }
-// //
-// //   String _formatDate(DateTime date) {
-// //     final now = DateTime.now();
-// //     final difference = now.difference(date);
-// //
-// //     if (difference.inDays == 0) {
-// //       return 'Today ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-// //     } else if (difference.inDays == 1) {
-// //       return 'Yesterday';
-// //     } else if (difference.inDays < 7) {
-// //       return '${difference.inDays} days ago';
-// //     } else {
-// //       return '${date.day}/${date.month}/${date.year}';
-// //     }
-// //   }
-// //
-// //   void _openComplaintDetails(BuildContext context, Map<String, dynamic> complaint, dynamic timestamp) {
-// //     showModalBottomSheet(
-// //       context: context,
-// //       isScrollControlled: true,
-// //       shape: RoundedRectangleBorder(
-// //         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-// //       ),
-// //       builder: (BuildContext context) {
-// //         return DraggableScrollableSheet(
-// //           initialChildSize: 0.9,
-// //           minChildSize: 0.5,
-// //           maxChildSize: 0.95,
-// //           builder: (_, controller) {
-// //             return Container(
-// //               padding: EdgeInsets.all(16),
-// //               child: Column(
-// //                 crossAxisAlignment: CrossAxisAlignment.start,
-// //                 children: [
-// //                   Row(
-// //                     children: [
-// //                       IconButton(
-// //                         icon: Icon(Icons.close),
-// //                         onPressed: () => Navigator.pop(context),
-// //                       ),
-// //                       Expanded(
-// //                         child: Text(
-// //                           'Complaint Details',
-// //                           style: Theme.of(context).textTheme.titleLarge,
-// //                           textAlign: TextAlign.center,
-// //                         ),
-// //                       ),
-// //                       SizedBox(width: 48),
-// //                     ],
-// //                   ),
-// //                   Divider(),
-// //                   Expanded(
-// //                     child: ListView(
-// //                       controller: controller,
-// //                       children: [
-// //                         if (complaint['fileUrl'] != null)
-// //                           ClipRRect(
-// //                             borderRadius: BorderRadius.circular(12),
-// //                             child: AspectRatio(
-// //                               aspectRatio: 16 / 9,
-// //                               child: Image.network(
-// //                                 complaint['fileUrl']!,
-// //                                 fit: BoxFit.cover,
-// //                                 loadingBuilder: (context, child, loadingProgress) {
-// //                                   if (loadingProgress == null) return child;
-// //                                   return Center(child: CircularProgressIndicator());
-// //                                 },
-// //                                 errorBuilder: (context, error, stackTrace) =>
-// //                                     Center(child: Icon(Icons.error)),
-// //                               ),
-// //                             ),
-// //                           ),
-// //                         SizedBox(height: 16),
-// //                         _buildDetailItem(
-// //                           'Description',
-// //                           complaint['description'] ?? 'No description',
-// //                           isMultiLine: true,
-// //                         ),
-// //                         _buildDetailItem('Priority', _getPriorityText(complaint['priority'] ?? 'No priority')),
-// //                         _buildDetailItem('Status', complaint['status'] ?? 'No status'),
-// //                         _buildDetailItem('Submitted by', complaint['userName'] ?? 'Unknown'),
-// //                         _buildDetailItem('Phone', complaint['userPhone'] ?? 'Unknown'),
-// //                         _buildDetailItem(
-// //                           'Timestamp',
-// //                           timestamp != null
-// //                               ? (timestamp as Timestamp).toDate().toLocal().toString()
-// //                               : 'N/A',
-// //                         ),
-// //                       ],
-// //                     ),
-// //                   ),
-// //                 ],
-// //               ),
-// //             );
-// //           },
-// //         );
-// //       },
-// //     );
-// //   }
-// //
-// //   Widget _buildDetailItem(String label, String value, {bool isMultiLine = false}) {
-// //     return Padding(
-// //       padding: EdgeInsets.symmetric(vertical: 8),
-// //       child: Column(
-// //         crossAxisAlignment: CrossAxisAlignment.start,
-// //         children: [
-// //           Text(
-// //             label,
-// //             style: TextStyle(
-// //               fontSize: 14,
-// //               fontWeight: FontWeight.bold,
-// //               color: Colors.grey[600],
-// //             ),
-// //           ),
-// //           SizedBox(height: 4),
-// //           Text(
-// //             value,
-// //             style: TextStyle(fontSize: 16),
-// //             maxLines: isMultiLine ? null : 1,
-// //             overflow: isMultiLine ? null : TextOverflow.ellipsis,
-// //           ),
-// //         ],
-// //       ),
-// //     );
-// //   }
-// // }
-//
-//
-// import 'dart:math';
-//
-// import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:flutter/cupertino.dart';
-// import 'package:flutter/material.dart';
-// import 'package:url_launcher/url_launcher.dart';
-// import 'package:geolocator/geolocator.dart';
-//
-// import '../l10n/app_localizations.dart';
-//
-// class ComplaintManagementDashboard extends StatefulWidget {
-//   @override
-//   _ComplaintManagementDashboardState createState() =>
-//       _ComplaintManagementDashboardState();
-// }
-//
-// class _ComplaintManagementDashboardState
-//     extends State<ComplaintManagementDashboard> with SingleTickerProviderStateMixin {
-//   late TabController _tabController;
-//   String _selectedPriority = "All";
-//   Position? _policeLocation;
-//   final double _radiusInKm = 2.0;
-//
-//   @override
-//   void initState() {
-//     super.initState();
-//     _tabController = TabController(length: 2, vsync: this);
-//     _requestLocationPermission();
-//   }
-//
-//   Future<void> _requestLocationPermission() async {
-//     try {
-//       LocationPermission permission = await Geolocator.checkPermission();
-//       if (permission == LocationPermission.denied) {
-//         permission = await Geolocator.requestPermission();
-//       }
-//
-//       if (permission == LocationPermission.whileInUse ||
-//           permission == LocationPermission.always) {
-//         Position position = await Geolocator.getCurrentPosition(
-//           desiredAccuracy: LocationAccuracy.high,
-//         );
-//         setState(() {
-//           _policeLocation = position;
-//         });
-//       }
-//     } catch (e) {
-//       print("Error getting location: $e");
-//     }
-//   }
-//
-//   double _calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-//     const p = 0.017453292519943295;
-//     final a = 0.5 -
-//         cos((lat2 - lat1) * p) / 2 +
-//         cos(lat1 * p) *
-//             cos(lat2 * p) *
-//             (1 - cos((lon2 - lon1) * p)) /
-//             2;
-//     return 12742 * asin(sqrt(a));
-//   }
-//
-//   bool _isWithinRadius(double complaintLat, double complaintLon) {
-//     if (_policeLocation == null) return true;
-//
-//     double distance = _calculateDistance(
-//       _policeLocation!.latitude,
-//       _policeLocation!.longitude,
-//       complaintLat,
-//       complaintLon,
-//     );
-//
-//     return distance <= _radiusInKm;
-//   }
-//
-//   @override
-//   void dispose() {
-//     _tabController.dispose();
-//     super.dispose();
-//   }
-//
-//   Stream<QuerySnapshot> _getFilteredComplaints(String priority, bool isResolved) {
-//     Query query = FirebaseFirestore.instance.collection('complaints');
-//
-//     if (priority != 'All') {
-//       query = query.where('priority', isEqualTo: priority);
-//     }
-//
-//     if (isResolved) {
-//       query = query.where('status', isEqualTo: 'Resolved');
-//     } else {
-//       query = query.where('status', isNotEqualTo: 'Resolved');
-//     }
-//
-//     return query.orderBy('priority', descending: true).snapshots();
-//   }
-//
-//   // Get localized text for priority
-//   String _getPriorityText(String priority) {
-//     switch (priority) {
-//       case 'All':
-//         return AppLocalizations.of(context)?.all ?? 'All';
-//       case 'High':
-//         return AppLocalizations.of(context)?.high ?? 'High';
-//       case 'Medium':
-//         return AppLocalizations.of(context)?.medium ?? 'Medium';
-//       case 'Low':
-//         return AppLocalizations.of(context)?.low ?? 'Low';
-//       default:
-//         return priority;
-//     }
-//   }
-//
-//   // Open location on map
-//   Future<void> _openMap(double latitude, double longitude) async {
-//     final String googleMapsUrl =
-//         'https://www.google.com/maps/search/?api=1&query=$latitude,$longitude';
-//
-//     try {
-//       await launchUrl(Uri.parse(googleMapsUrl), mode: LaunchMode.externalApplication);
-//     } catch (e) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Could not open map: $e')),
-//       );
-//     }
-//   }
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: PreferredSize(
-//         preferredSize: Size.fromHeight(kToolbarHeight + 50),
-//         child: AppBar(
-//           title: null,
-//           bottom: TabBar(
-//             controller: _tabController,
-//             tabs: [
-//               Tab(text: AppLocalizations.of(context)?.active ?? 'Active'),
-//               Tab(text: AppLocalizations.of(context)?.resolvedcomplaints ?? 'Resolved'),
-//             ],
-//           ),
-//         ),
-//       ),
-//       body: Column(
-//           children: [
-//           if (_policeLocation != null)
-//             // Container(
-//             //   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-//             //   color: Colors.blue.withOpacity(0.1),
-//             //   child: Row(
-//             //     children: [
-//             //       Icon(Icons.my_location, color: Colors.blue, size: 20),
-//             //       SizedBox(width: 8),
-//             //       Expanded(
-//             //         child: Text(
-//             //           'Showing complaints within ${_radiusInKm.toStringAsFixed(1)} km radius',
-//             //           style: TextStyle(
-//             //             color: Colors.blue[700],
-//             //             fontWeight: FontWeight.w500,
-//             //             fontSize: 13,
-//             //           ),
-//             //         ),
-//             //       ),
-//             //     ],
-//             //   ),
-//             // ),
-//           Expanded(
-//             child: TabBarView(
-//               controller: _tabController,
-//               children: [
-//                 _buildComplaintsTab(false),
-//                 _buildComplaintsTab(true),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-//
-//   Widget _buildComplaintsTab(bool isResolved) {
-//     return Column(
-//       children: [
-//         if (!isResolved) _buildPriorityFilters(),
-//         Expanded(
-//           child: StreamBuilder<QuerySnapshot>(
-//             stream: _getFilteredComplaints(_selectedPriority, isResolved),
-//             builder: (context, snapshot) {
-//               if (snapshot.connectionState == ConnectionState.waiting) {
-//                 return Center(child: CircularProgressIndicator());
-//               }
-//
-//               if (snapshot.hasError) {
-//                 return Center(child: Text("Error: ${snapshot.error}"));
-//               }
-//
-//               var complaints = snapshot.data?.docs ?? [];
-//
-//               // Filter by radius if location is available
-//               if (_policeLocation != null) {
-//                 complaints = complaints.where((doc) {
-//                   final complaint = doc.data() as Map<String, dynamic>;
-//                   final location = complaint['location'];
-//                   if (location == null) return false;
-//
-//                   final lat = location['latitude'] as double?;
-//                   final lon = location['longitude'] as double?;
-//                   if (lat == null || lon == null) return false;
-//
-//                   return _isWithinRadius(lat, lon);
-//                 }).toList();
-//               }
-//
-//               if (complaints.isEmpty) {
-//                 return Center(
-//                   child: Text(
-//                     _policeLocation != null
-//                         ? 'No complaints within ${_radiusInKm.toStringAsFixed(1)} km'
-//                         : (isResolved ? 'No resolved complaints' : 'No active complaints'),
-//                     style: TextStyle(fontSize: 16, color: Colors.grey),
-//                   ),
-//                 );
-//               }
-//
-//               return ListView.builder(
-//                 itemCount: complaints.length,
-//                 itemBuilder: (context, index) {
-//                   final complaint = complaints[index].data() as Map<String, dynamic>;
-//                   final timestamp = complaint['timestamp'];
-//
-//                   return _buildComplaintCard(complaint, timestamp);
-//                 },
-//               );
-//             },
-//           ),
-//         ),
-//       ],
-//     );
-//   }
-//
-//   Widget _buildPriorityFilters() {
-//     return SingleChildScrollView(
-//       scrollDirection: Axis.horizontal,
-//       padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-//       child: Row(
-//         children: ['All', 'High', 'Medium', 'Low'].map((priority) {
-//           return Padding(
-//             padding: EdgeInsets.only(right: 8),
-//             child: ElevatedButton(
-//               onPressed: () => setState(() => _selectedPriority = priority),
-//               style: ElevatedButton.styleFrom(
-//                 foregroundColor: Colors.white,
-//                 backgroundColor: _selectedPriority == priority ? Colors.blue : Colors.grey,
-//                 padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-//               ),
-//               child: Text(_getPriorityText(priority)),
-//             ),
-//           );
-//         }).toList(),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildComplaintCard(Map<String, dynamic> complaint, dynamic timestamp) {
-//     // Get priority color
-//     Color priorityColor = Colors.grey;
-//     switch (complaint['priority']) {
-//       case 'High':
-//         priorityColor = Colors.red;
-//         break;
-//       case 'Medium':
-//         priorityColor = Colors.orange;
-//         break;
-//       case 'Low':
-//         priorityColor = Colors.green;
-//         break;
-//     }
-//
-//     return Card(
-//       margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-//       elevation: 2,
-//       child: ListTile(
-//         leading: Container(
-//           width: 4,
-//           height: double.infinity,
-//           decoration: BoxDecoration(
-//             color: priorityColor,
-//             borderRadius: BorderRadius.circular(2),
-//           ),
-//         ),
-//         title: Text(
-//           complaint['description'] ?? 'No description',
-//           maxLines: 2,
-//           overflow: TextOverflow.ellipsis,
-//           style: TextStyle(fontWeight: FontWeight.w600),
-//         ),
-//         subtitle: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             SizedBox(height: 8),
-//             Row(
-//               children: [
-//                 _buildChip(
-//                   _getPriorityText(complaint['priority'] ?? 'No priority'),
-//                   priorityColor,
-//                 ),
-//                 SizedBox(width: 8),
-//                 _buildChip(
-//                   complaint['status'] ?? 'No status',
-//                   Colors.blue,
-//                 ),
-//               ],
-//             ),
-//             SizedBox(height: 4),
-//             _buildInfoText('Submitted by', complaint['userName'] ?? 'Unknown'),
-//             _buildInfoText('Phone', complaint['userPhone'] ?? 'Unknown'),
-//             _buildInfoText(
-//               'Date',
-//               timestamp != null
-//                   ? _formatDate((timestamp as Timestamp).toDate())
-//                   : 'N/A',
-//             ),
-//           ],
-//         ),
-//         onTap: () => _openComplaintDetails(context, complaint, timestamp),
-//         trailing: Icon(Icons.chevron_right),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildChip(String label, Color color) {
-//     return Container(
-//       padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-//       decoration: BoxDecoration(
-//         color: color.withOpacity(0.1),
-//         borderRadius: BorderRadius.circular(12),
-//         border: Border.all(color: color.withOpacity(0.3)),
-//       ),
-//       child: Text(
-//         label,
-//         style: TextStyle(
-//           color: color,
-//           fontSize: 12,
-//           fontWeight: FontWeight.bold,
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildInfoText(String label, String value) {
-//     return Padding(
-//       padding: EdgeInsets.only(bottom: 2),
-//       child: Text(
-//         '$label: $value',
-//         maxLines: 1,
-//         overflow: TextOverflow.ellipsis,
-//         style: TextStyle(fontSize: 13, color: Colors.grey[700]),
-//       ),
-//     );
-//   }
-//
-//   String _formatDate(DateTime date) {
-//     final now = DateTime.now();
-//     final difference = now.difference(date);
-//
-//     if (difference.inDays == 0) {
-//       return 'Today ${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-//     } else if (difference.inDays == 1) {
-//       return 'Yesterday';
-//     } else if (difference.inDays < 7) {
-//       return '${difference.inDays} days ago';
-//     } else {
-//       return '${date.day}/${date.month}/${date.year}';
-//     }
-//   }
-//
-//   void _openComplaintDetails(BuildContext context, Map<String, dynamic> complaint, dynamic timestamp) {
-//     showModalBottomSheet(
-//       context: context,
-//       isScrollControlled: true,
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-//       ),
-//       builder: (BuildContext context) {
-//         return DraggableScrollableSheet(
-//           initialChildSize: 0.9,
-//           minChildSize: 0.5,
-//           maxChildSize: 0.95,
-//           builder: (_, controller) {
-//             return Container(
-//               padding: EdgeInsets.all(16),
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Row(
-//                     children: [
-//                       IconButton(
-//                         icon: Icon(Icons.close),
-//                         onPressed: () => Navigator.pop(context),
-//                       ),
-//                       Expanded(
-//                         child: Text(
-//                           'Complaint Details',
-//                           style: Theme.of(context).textTheme.titleLarge,
-//                           textAlign: TextAlign.center,
-//                         ),
-//                       ),
-//                       SizedBox(width: 48),
-//                     ],
-//                   ),
-//                   Divider(),
-//                   Expanded(
-//                     child: ListView(
-//                       controller: controller,
-//                       children: [
-//                         if (complaint['fileUrl'] != null)
-//                           ClipRRect(
-//                             borderRadius: BorderRadius.circular(12),
-//                             child: AspectRatio(
-//                               aspectRatio: 16 / 9,
-//                               child: Image.network(
-//                                 complaint['fileUrl']!,
-//                                 fit: BoxFit.cover,
-//                                 loadingBuilder: (context, child, loadingProgress) {
-//                                   if (loadingProgress == null) return child;
-//                                   return Center(child: CircularProgressIndicator());
-//                                 },
-//                                 errorBuilder: (context, error, stackTrace) =>
-//                                     Center(child: Icon(Icons.error)),
-//                               ),
-//                             ),
-//                           ),
-//                         SizedBox(height: 16),
-//                         _buildDetailItem(
-//                           'Description',
-//                           complaint['description'] ?? 'No description',
-//                           isMultiLine: true,
-//                         ),
-//                         _buildDetailItem('Priority', _getPriorityText(complaint['priority'] ?? 'No priority')),
-//                         _buildDetailItem('Status', complaint['status'] ?? 'No status'),
-//                         _buildDetailItem('Submitted by', complaint['userName'] ?? 'Unknown'),
-//                         _buildDetailItem('Phone', complaint['userPhone'] ?? 'Unknown'),
-//                         _buildDetailItem(
-//                           'Timestamp',
-//                           timestamp != null
-//                               ? (timestamp as Timestamp).toDate().toLocal().toString()
-//                               : 'N/A',
-//                         ),
-//                         // Location Section
-//                         if (complaint['location'] != null) ...[
-//                           SizedBox(height: 16),
-//                           Divider(),
-//                           SizedBox(height: 8),
-//                           Text(
-//                             'Location',
-//                             style: TextStyle(
-//                               fontSize: 16,
-//                               fontWeight: FontWeight.bold,
-//                               color: Colors.grey[600],
-//                             ),
-//                           ),
-//                           SizedBox(height: 12),
-//                           _buildLocationCard(
-//                             complaint['location']['latitude'] ?? 0.0,
-//                             complaint['location']['longitude'] ?? 0.0,
-//                           ),
-//                         ],
-//                       ],
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             );
-//           },
-//         );
-//       },
-//     );
-//   }
-//
-//   Widget _buildLocationCard(double latitude, double longitude) {
-//     return GestureDetector(
-//       onTap: () => _openMap(latitude, longitude),
-//       child: Container(
-//         padding: EdgeInsets.all(12),
-//         decoration: BoxDecoration(
-//           color: Colors.blue.withOpacity(0.1),
-//           borderRadius: BorderRadius.circular(8),
-//           border: Border.all(color: Colors.blue.withOpacity(0.3)),
-//         ),
-//         child: Row(
-//           children: [
-//             Icon(Icons.location_on, color: Colors.blue, size: 28),
-//             SizedBox(width: 12),
-//             Expanded(
-//               child: Column(
-//                 crossAxisAlignment: CrossAxisAlignment.start,
-//                 children: [
-//                   Text(
-//                     'Latitude',
-//                     style: TextStyle(
-//                       fontSize: 12,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.grey[600],
-//                     ),
-//                   ),
-//                   Text(
-//                     latitude.toString(),
-//                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-//                   ),
-//                   SizedBox(height: 6),
-//                   Text(
-//                     'Longitude',
-//                     style: TextStyle(
-//                       fontSize: 12,
-//                       fontWeight: FontWeight.bold,
-//                       color: Colors.grey[600],
-//                     ),
-//                   ),
-//                   Text(
-//                     longitude.toString(),
-//                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//             Icon(Icons.open_in_new, color: Colors.blue),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-//
-//   Widget _buildDetailItem(String label, String value, {bool isMultiLine = false}) {
-//     return Padding(
-//       padding: EdgeInsets.symmetric(vertical: 8),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(
-//             label,
-//             style: TextStyle(
-//               fontSize: 14,
-//               fontWeight: FontWeight.bold,
-//               color: Colors.grey[600],
-//             ),
-//           ),
-//           SizedBox(height: 4),
-//           Text(
-//             value,
-//             style: TextStyle(fontSize: 16),
-//             maxLines: isMultiLine ? null : 1,
-//             overflow: isMultiLine ? null : TextOverflow.ellipsis,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1304,9 +98,9 @@ class _ComplaintManagementDashboardState
     }
 
     if (isResolved) {
-      query = query.where('status', isEqualTo: 'Resolved');
+      query = query.where('status', isEqualTo: 'Completed');
     } else {
-      query = query.where('status', isNotEqualTo: 'Resolved');
+      query = query.where('status', isNotEqualTo: 'Completed');
     }
 
     return query.orderBy('priority', descending: true).snapshots();
@@ -1341,15 +135,57 @@ class _ComplaintManagementDashboardState
     }
   }
 
+  Future<void> _updateComplaintStatus(String complaintId, String newStatus, {String? completionInfo}) async {
+    try {
+      Map<String, dynamic> updateData = {
+        'status': newStatus,
+        'statusUpdatedAt': FieldValue.serverTimestamp(),
+      };
+
+      if (newStatus == 'Completed' && completionInfo != null && completionInfo.isNotEmpty) {
+        updateData['completionInfo'] = completionInfo;
+        updateData['completedAt'] = FieldValue.serverTimestamp();
+      }
+
+      await FirebaseFirestore.instance
+          .collection('complaints')
+          .doc(complaintId)
+          .update(updateData);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Status updated to $newStatus'),
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating status: $e'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+    }
+  }
+
+  void _showStatusUpdateDialog(String complaintId, String currentStatus) {
+    showDialog(
+      context: context,
+      builder: (context) => StatusUpdateDialog(
+        complaintId: complaintId,
+        currentStatus: currentStatus,
+        onUpdateStatus: _updateComplaintStatus,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: Column(
         children: [
-          // Tab Bar
           _buildTabBar(),
-          // Content
           Expanded(
             child: TabBarView(
               controller: _tabController,
@@ -1415,7 +251,7 @@ class _ComplaintManagementDashboardState
               children: [
                 Icon(Icons.check_circle_outline, size: 18),
                 SizedBox(width: 8),
-                Text(AppLocalizations.of(context)?.resolvedcomplaints ?? 'Resolved'),
+                Text(AppLocalizations.of(context)?.resolvedcomplaints ?? 'Completed'),
               ],
             ),
           ),
@@ -1470,8 +306,8 @@ class _ComplaintManagementDashboardState
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   itemCount: complaints.length,
                   itemBuilder: (context, index) {
-                    final complaint =
-                    complaints[index].data() as Map<String, dynamic>;
+                    final doc = complaints[index];
+                    final complaint = doc.data() as Map<String, dynamic>;
                     final timestamp = complaint['timestamp'];
 
                     return TweenAnimationBuilder(
@@ -1487,7 +323,7 @@ class _ComplaintManagementDashboardState
                           ),
                         );
                       },
-                      child: _buildComplaintCard(complaint, timestamp, index),
+                      child: _buildComplaintCard(doc.id, complaint, timestamp, index),
                     );
                   },
                 );
@@ -1543,9 +379,7 @@ class _ComplaintManagementDashboardState
                       color: isSelected ? null : Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: isSelected
-                            ? filterColor
-                            : Colors.grey[300]!,
+                        color: isSelected ? filterColor : Colors.grey[300]!,
                         width: isSelected ? 0 : 1,
                       ),
                       boxShadow: isSelected
@@ -1591,7 +425,7 @@ class _ComplaintManagementDashboardState
   }
 
   Widget _buildComplaintCard(
-      Map<String, dynamic> complaint, dynamic timestamp, int index) {
+      String complaintId, Map<String, dynamic> complaint, dynamic timestamp, int index) {
     Color priorityColor = Colors.grey;
     IconData priorityIcon = Icons.remove;
 
@@ -1607,6 +441,24 @@ class _ComplaintManagementDashboardState
       case 'Low':
         priorityColor = Color(0xFF10B981);
         priorityIcon = Icons.arrow_downward_rounded;
+        break;
+    }
+
+    Color statusColor = Colors.grey;
+    IconData statusIcon = Icons.info_outline;
+
+    switch (complaint['status']) {
+      case 'Pending':
+        statusColor = Color(0xFFF59E0B);
+        statusIcon = Icons.pending_outlined;
+        break;
+      case 'In Process':
+        statusColor = Color(0xFF3B82F6);
+        statusIcon = Icons.autorenew;
+        break;
+      case 'Completed':
+        statusColor = Color(0xFF10B981);
+        statusIcon = Icons.check_circle_outline;
         break;
     }
 
@@ -1626,7 +478,7 @@ class _ComplaintManagementDashboardState
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => _openComplaintDetails(context, complaint, timestamp),
+          onTap: () => _openComplaintDetails(context, complaintId, complaint, timestamp),
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: EdgeInsets.all(16),
@@ -1682,8 +534,8 @@ class _ComplaintManagementDashboardState
                     ),
                     _buildModernChip(
                       complaint['status'] ?? 'No status',
-                      Color(0xFF3B82F6),
-                      Icons.info_outline,
+                      statusColor,
+                      statusIcon,
                     ),
                   ],
                 ),
@@ -1714,6 +566,25 @@ class _ComplaintManagementDashboardState
                     ),
                   ],
                 ),
+                if (complaint['status'] != 'Completed') ...[
+                  SizedBox(height: 12),
+                  Divider(height: 1, color: Colors.grey[200]),
+                  SizedBox(height: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => _showStatusUpdateDialog(complaintId, complaint['status'] ?? 'Pending'),
+                    icon: Icon(Icons.edit_outlined, size: 18),
+                    label: Text('Update Status'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFF6366F1),
+                      foregroundColor: Colors.white,
+                      minimumSize: Size(double.infinity, 40),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -1785,7 +656,7 @@ class _ComplaintManagementDashboardState
   }
 
   void _openComplaintDetails(
-      BuildContext context, Map<String, dynamic> complaint, dynamic timestamp) {
+      BuildContext context, String complaintId, Map<String, dynamic> complaint, dynamic timestamp) {
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
@@ -1794,9 +665,11 @@ class _ComplaintManagementDashboardState
           return FadeTransition(
             opacity: animation,
             child: ComplaintDetailsSheet(
+              complaintId: complaintId,
               complaint: complaint,
               timestamp: timestamp,
               onOpenMap: _openMap,
+              onUpdateStatus: _showStatusUpdateDialog,
               getPriorityText: _getPriorityText,
             ),
           );
@@ -1905,7 +778,7 @@ class _ComplaintManagementDashboardState
           Text(
             _policeLocation != null
                 ? 'No complaints within ${_radiusInKm.toStringAsFixed(1)} km'
-                : (isResolved ? 'No resolved complaints' : 'No active complaints'),
+                : (isResolved ? 'No completed complaints' : 'No active complaints'),
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -1958,17 +831,345 @@ class _ComplaintManagementDashboardState
   }
 }
 
+class StatusUpdateDialog extends StatefulWidget {
+  final String complaintId;
+  final String currentStatus;
+  final Function(String, String, {String? completionInfo}) onUpdateStatus;
+
+  const StatusUpdateDialog({
+    Key? key,
+    required this.complaintId,
+    required this.currentStatus,
+    required this.onUpdateStatus,
+  }) : super(key: key);
+
+  @override
+  _StatusUpdateDialogState createState() => _StatusUpdateDialogState();
+}
+
+class _StatusUpdateDialogState extends State<StatusUpdateDialog> {
+  String? _selectedStatus;
+  final TextEditingController _completionInfoController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedStatus = widget.currentStatus;
+  }
+
+  @override
+  void dispose() {
+    _completionInfoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleUpdate() async {
+    if (_selectedStatus == null) return;
+
+    if (_selectedStatus == 'Completed' && _completionInfoController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Please provide completion information'),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    await widget.onUpdateStatus(
+      widget.complaintId,
+      _selectedStatus!,
+      completionInfo: _selectedStatus == 'Completed' ? _completionInfoController.text.trim() : null,
+    );
+
+    setState(() => _isLoading = false);
+    Navigator.pop(context);
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Color(0xFFF59E0B);
+      case 'In Process':
+        return Color(0xFF3B82F6);
+      case 'Completed':
+        return Color(0xFF10B981);
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'Pending':
+        return Icons.pending_outlined;
+      case 'In Process':
+        return Icons.autorenew;
+      case 'Completed':
+        return Icons.check_circle_outline;
+      default:
+        return Icons.info_outline;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 400),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(Icons.edit_outlined, color: Colors.white, size: 24),
+                  ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Update Status',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Select Status',
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  ...['Pending', 'In Process', 'Completed'].map((status) {
+                    final isSelected = _selectedStatus == status;
+                    final statusColor = _getStatusColor(status);
+                    final statusIcon = _getStatusIcon(status);
+
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => setState(() => _selectedStatus = status),
+                          borderRadius: BorderRadius.circular(12),
+                          child: AnimatedContainer(
+                            duration: Duration(milliseconds: 200),
+                            padding: EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? statusColor.withOpacity(0.1)
+                                  : Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isSelected
+                                    ? statusColor
+                                    : Colors.grey[300]!,
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    statusIcon,
+                                    color: statusColor,
+                                    size: 20,
+                                  ),
+                                ),
+                                SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    status,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: isSelected
+                                          ? FontWeight.w600
+                                          : FontWeight.w500,
+                                      color: isSelected
+                                          ? statusColor
+                                          : Colors.grey[700],
+                                    ),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: statusColor,
+                                    size: 24,
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  if (_selectedStatus == 'Completed') ...[
+                    SizedBox(height: 16),
+                    Text(
+                      'Completion Information *',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    SizedBox(height: 8),
+                    TextField(
+                      controller: _completionInfoController,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        hintText: 'Provide details about the resolution...',
+                        hintStyle: GoogleFonts.roboto(
+                          color: Colors.grey[400],
+                          fontSize: 14,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(
+                            color: Color(0xFF10B981),
+                            width: 2,
+                          ),
+                        ),
+                        contentPadding: EdgeInsets.all(16),
+                      ),
+                      style: GoogleFonts.roboto(
+                        fontSize: 14,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : () => Navigator.pop(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            side: BorderSide(color: Colors.grey[300]!),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _handleUpdate,
+                          style: ElevatedButton.styleFrom(
+                            padding: EdgeInsets.symmetric(vertical: 14),
+                            backgroundColor: Color(0xFF6366F1),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: _isLoading
+                              ? SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white),
+                            ),
+                          )
+                              : Text(
+                            'Update',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class ComplaintDetailsSheet extends StatelessWidget {
+  final String complaintId;
   final Map<String, dynamic> complaint;
   final dynamic timestamp;
   final Function(double, double) onOpenMap;
+  final Function(String, String) onUpdateStatus;
   final String Function(String) getPriorityText;
 
   const ComplaintDetailsSheet({
     Key? key,
+    required this.complaintId,
     required this.complaint,
     required this.timestamp,
     required this.onOpenMap,
+    required this.onUpdateStatus,
     required this.getPriorityText,
   }) : super(key: key);
 
@@ -1984,6 +1185,19 @@ class ComplaintDetailsSheet extends StatelessWidget {
         break;
       case 'Low':
         priorityColor = Color(0xFF10B981);
+        break;
+    }
+
+    Color statusColor = Colors.grey;
+    switch (complaint['status']) {
+      case 'Pending':
+        statusColor = Color(0xFFF59E0B);
+        break;
+      case 'In Process':
+        statusColor = Color(0xFF3B82F6);
+        break;
+      case 'Completed':
+        statusColor = Color(0xFF10B981);
         break;
     }
 
@@ -2095,7 +1309,7 @@ class ComplaintDetailsSheet extends StatelessWidget {
                           icon: Icons.info_outline,
                           title: 'Status',
                           content: complaint['status'] ?? 'No status',
-                          color: Color(0xFF3B82F6),
+                          color: statusColor,
                         ),
                       ),
                     ],
@@ -2120,12 +1334,51 @@ class ComplaintDetailsSheet extends StatelessWidget {
                         ? (timestamp as Timestamp).toDate().toLocal().toString()
                         : 'N/A',
                   ),
+                  if (complaint['completionInfo'] != null && complaint['completionInfo'].toString().isNotEmpty) ...[
+                    SizedBox(height: 16),
+                    _buildDetailSection(
+                      icon: Icons.check_circle_outline,
+                      title: 'Completion Information',
+                      content: complaint['completionInfo'],
+                      isMultiLine: true,
+                      color: Color(0xFF10B981),
+                    ),
+                  ],
+                  if (complaint['completedAt'] != null) ...[
+                    SizedBox(height: 16),
+                    _buildDetailSection(
+                      icon: Icons.event_available,
+                      title: 'Completed At',
+                      content: (complaint['completedAt'] as Timestamp).toDate().toLocal().toString(),
+                      color: Color(0xFF10B981),
+                    ),
+                  ],
                   if (complaint['location'] != null) ...[
                     SizedBox(height: 20),
                     _buildLocationCard(
                       complaint['location']['latitude'] ?? 0.0,
                       complaint['location']['longitude'] ?? 0.0,
                       context,
+                    ),
+                  ],
+                  if (complaint['status'] != 'Completed') ...[
+                    SizedBox(height: 20),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onUpdateStatus(complaintId, complaint['status'] ?? 'Pending');
+                      },
+                      icon: Icon(Icons.edit_outlined, size: 20),
+                      label: Text('Update Status'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF6366F1),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
                     ),
                   ],
                 ],
